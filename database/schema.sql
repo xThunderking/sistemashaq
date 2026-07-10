@@ -1,0 +1,21 @@
+CREATE DATABASE IF NOT EXISTS sistemashaq
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+
+USE sistemashaq;
+
+CREATE TABLE IF NOT EXISTS equipos (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  serial_number VARCHAR(100) NOT NULL,
+  area VARCHAR(100) NOT NULL,
+  ip_address VARCHAR(45) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  CONSTRAINT uq_equipos_serial UNIQUE (serial_number),
+  CONSTRAINT uq_equipos_ip UNIQUE (ip_address),
+  INDEX idx_equipos_area (area)
+) ENGINE=InnoDB
+  DEFAULT CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;

@@ -1,0 +1,17 @@
+{
+  "name": "control-equipos-haq",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@aws-sdk/client-rds-data": "^3.864.0"
+  },
+  "devDependencies": {
+    "vite": "^7.0.0"
+  }
+}

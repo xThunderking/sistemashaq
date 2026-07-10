@@ -1,0 +1,17 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AuroraDataApi",
+      "Effect": "Allow",
+      "Action": ["rds-data:ExecuteStatement"],
+      "Resource": "REEMPLAZAR_CON_AURORA_RESOURCE_ARN"
+    },
+    {
+      "Sid": "ReadAuroraSecret",
+      "Effect": "Allow",
+      "Action": ["secretsmanager:GetSecretValue"],
+      "Resource": "REEMPLAZAR_CON_AURORA_SECRET_ARN"
+    }
+  ]
+}

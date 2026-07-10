@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0a1628" />
+    <title>Inventario de equipos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="brand"><span class="brand-mark">H</span><div><strong>HAQ</strong><small>Control de activos</small></div></div>
+        <nav><button class="nav-item active"><span>▦</span> Equipos</button></nav>
+        <div class="side-foot"><span class="status-dot"></span><div><strong>Sistema activo</strong><small>Amazon Aurora</small></div></div>
+      </aside>
+
+      <main>
+        <header><div><p class="eyebrow">INVENTARIO</p><h1>Control de equipos</h1><p class="subtitle">Administra los activos tecnológicos de tu organización.</p></div><button id="newButton" class="primary">＋ Agregar equipo</button></header>
+
+        <section class="stats">
+          <article><span class="stat-icon blue">▣</span><div><small>Total de equipos</small><strong id="totalCount">—</strong></div></article>
+          <article><span class="stat-icon violet">⌁</span><div><small>Áreas registradas</small><strong id="areaCount">—</strong></div></article>
+          <article><span class="stat-icon green">✓</span><div><small>Con IP asignada</small><strong id="ipCount">—</strong></div></article>
+        </section>
+
+        <section class="panel">
+          <div class="toolbar"><div class="search"><span>⌕</span><input id="searchInput" type="search" placeholder="Buscar por serie, área o dirección IP..." /></div><button id="refreshButton" class="ghost" title="Actualizar">↻ <span>Actualizar</span></button></div>
+          <div class="table-wrap">
+            <table><thead><tr><th>NÚMERO DE SERIE</th><th>ÁREA</th><th>DIRECCIÓN IP</th><th>FECHA DE REGISTRO</th><th></th></tr></thead><tbody id="equipmentBody"></tbody></table>
+            <div id="state" class="state"><span class="loader"></span><p>Cargando equipos...</p></div>
+          </div>
+          <footer class="table-footer"><span id="resultCount">0 equipos</span></footer>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="equipmentDialog">
+      <form id="equipmentForm">
+        <div class="modal-head"><div><p class="eyebrow">INVENTARIO</p><h2 id="modalTitle">Agregar equipo</h2></div><button type="button" class="close" id="closeDialog">×</button></div>
+        <input type="hidden" id="equipmentId" />
+        <label>Número de serie <span>*</span><input id="serialNumber" maxlength="100" required placeholder="Ej. DELL-8X29K1" /></label>
+        <label>Área <span>*</span><input id="area" maxlength="100" required placeholder="Ej. Contabilidad" /></label>
+        <label>Dirección IP <span>*</span><input id="ipAddress" required inputmode="decimal" placeholder="Ej. 192.168.1.25" /></label>
+        <p id="formError" class="form-error"></p>
+        <div class="modal-actions"><button type="button" class="secondary" id="cancelDialog">Cancelar</button><button type="submit" class="primary" id="saveButton">Guardar equipo</button></div>
+      </form>
+    </dialog>
+    <div id="toast" class="toast"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
