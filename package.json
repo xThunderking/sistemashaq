@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@aws-sdk/client-rds-data": "^3.864.0"
+    "mysql2": "^3.14.3"
   },
   "devDependencies": {
     "vite": "^7.0.0"

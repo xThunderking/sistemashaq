@@ -1,6 +1,6 @@
 # Control de equipos HAQ
 
-Aplicación para registrar, consultar, editar y eliminar equipos por número de serie, área y dirección IP. El frontend se despliega en Netlify y la API usa funciones de Netlify para acceder a Amazon Aurora MySQL mediante RDS Data API.
+Aplicación para registrar, consultar, editar y eliminar equipos por número de serie, área y dirección IP. El frontend se despliega en Netlify y la API usa funciones de Netlify para acceder a Amazon RDS MySQL mediante una conexión TLS.
 
 ## Desarrollo local
 
@@ -9,12 +9,10 @@ Aplicación para registrar, consultar, editar y eliminar equipos por número de 
 3. Crea la base de datos ejecutando `database/schema.sql` en Aurora MySQL.
 4. Para probar sólo la interfaz, usa `npm run dev`. Para probar también las funciones, ejecuta `npx netlify-cli dev` y abre `http://localhost:8888`.
 
-La identidad de AWS usada localmente debe tener permisos `rds-data:ExecuteStatement` y `secretsmanager:GetSecretValue` sobre el clúster y secreto configurados.
-
 ## Configuración de AWS
 
-- Usa un clúster Amazon Aurora MySQL compatible con RDS Data API y activa **HTTP endpoint / Data API**.
-- Guarda las credenciales del clúster en AWS Secrets Manager.
+- La instancia MySQL debe ser accesible desde las funciones de Netlify y exigir TLS.
+- Configura el grupo de seguridad de RDS con el acceso de red mínimo necesario.
 - Descarga el certificado global de Amazon RDS y conecta con verificación TLS:
 
   ```bash
@@ -29,12 +27,12 @@ La identidad de AWS usada localmente debe tener permisos `rds-data:ExecuteStatem
 
 En **Site configuration → Environment variables**, agrega:
 
-- `AWS_REGION`
-- `AWS_ACCESS_KEY_ID`
-- `AWS_SECRET_ACCESS_KEY`
-- `AURORA_RESOURCE_ARN`
-- `AURORA_SECRET_ARN`
-- `AURORA_DATABASE` (`sistemashaq`)
+- `DB_HOST`
+- `DB_PORT` (`3306`)
+- `DB_NAME` (`sistemashaq`)
+- `DB_USER`
+- `DB_PASSWORD`
+- `DB_SSL` (`true`)
 
 Nunca expongas estas variables con prefijo `VITE_`: eso las enviaría al navegador.
 
