@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "aws-ssl-profiles": "^1.1.2",
     "mysql2": "^3.14.3"
   },
   "devDependencies": {

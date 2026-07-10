@@ -1,4 +1,5 @@
 import mysql from 'mysql2/promise';
+import awsCaBundle from 'aws-ssl-profiles';
 
 let pool;
 const getPool = () => pool ||= mysql.createPool({
@@ -7,7 +8,7 @@ const getPool = () => pool ||= mysql.createPool({
   database: process.env.DB_NAME,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  ssl: process.env.DB_SSL === 'false' ? undefined : { rejectUnauthorized: true, minVersion: 'TLSv1.2' },
+  ssl: process.env.DB_SSL === 'false' ? undefined : { ...awsCaBundle, rejectUnauthorized: true, minVersion: 'TLSv1.2' },
   waitForConnections: true,
   connectionLimit: 3,
   queueLimit: 0,
