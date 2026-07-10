@@ -31,9 +31,9 @@
         </section>
 
         <section class="panel">
-          <div class="toolbar"><div class="search"><span>⌕</span><input id="searchInput" type="search" placeholder="Buscar por serie, área o dirección IP..." /></div><button id="refreshButton" class="ghost" title="Actualizar">↻ <span>Actualizar</span></button></div>
+          <div class="toolbar"><div class="search"><span>⌕</span><input id="searchInput" type="search" placeholder="Buscar por serie, área, responsable o IP..." /></div><button id="refreshButton" class="ghost" title="Actualizar">↻ <span>Actualizar</span></button></div>
           <div class="table-wrap">
-            <table><thead><tr><th>NÚMERO DE SERIE</th><th>ÁREA</th><th>DIRECCIÓN IP</th><th>AUDITORÍA 2026</th><th>FECHA DE REGISTRO</th><th></th></tr></thead><tbody id="equipmentBody"></tbody></table>
+            <table><thead><tr><th>NÚMERO DE SERIE</th><th>ÁREA</th><th>RESPONSABLE</th><th>DIRECCIÓN IP</th><th>AUDITORÍA 2026</th><th>FECHA DE REGISTRO</th><th></th></tr></thead><tbody id="equipmentBody"></tbody></table>
             <div id="state" class="state"><span class="loader"></span><p>Cargando equipos...</p></div>
           </div>
           <footer class="table-footer"><span id="resultCount">0 equipos</span></footer>
@@ -56,6 +56,7 @@
         <input type="hidden" id="equipmentId" />
         <label>Número de serie <span>*</span><input id="serialNumber" maxlength="100" required placeholder="Ej. DELL-8X29K1" /></label>
         <label>Área <span>*</span><select id="area" required><option value="">Selecciona un área</option></select></label>
+        <label>Responsable <span>*</span><input id="responsable" maxlength="150" required placeholder="Nombre de quien utiliza el equipo" autocomplete="name" /></label>
         <label>Dirección IP <span>*</span><input id="ipAddress" required inputmode="decimal" placeholder="Ej. 192.168.1.25" /></label>
         <fieldset class="audit-checklist">
           <legend>Auditoría 2026</legend>
@@ -67,7 +68,8 @@
             <label class="check-item"><input type="checkbox" id="paginasNoAutorizadas" /><span>Páginas no autorizadas</span></label>
             <label class="check-item"><input type="checkbox" id="escritorio" /><span>Escritorio</span></label>
             <label class="check-item"><input type="checkbox" id="tiempoBloqueo" /><span>Tiempo de bloqueo</span></label>
-            <label class="check-item"><input type="checkbox" id="glpiAntivirus" /><span>GLPI y antivirus</span></label>
+            <label class="check-item"><input type="checkbox" id="bloqueoConfiguracion" /><span>Bloqueo de configuración</span></label>
+            <label class="check-item"><input type="checkbox" id="glpi" /><span>GLPI</span></label>
           </div>
         </fieldset>
         <p id="formError" class="form-error"></p>

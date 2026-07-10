@@ -26,3 +26,26 @@ CREATE TABLE IF NOT EXISTS auditoria_2026 (
 -- Crea registros pendientes para los equipos que ya existían.
 INSERT IGNORE INTO auditoria_2026 (equipo_id)
 SELECT id FROM equipos;
+
+-- ============================================================
+-- FECHA: 2026-07-10
+-- CAMBIO: Agregar "Bloqueo de configuración" y renombrar
+--         "GLPI y antivirus" a "GLPI".
+-- Ejecutar esta sección una sola vez si auditoria_2026 ya existe.
+-- ============================================================
+
+ALTER TABLE auditoria_2026
+  ADD COLUMN bloqueo_configuracion BOOLEAN NOT NULL DEFAULT FALSE
+    AFTER tiempo_bloqueo,
+  CHANGE COLUMN glpi_antivirus glpi BOOLEAN NOT NULL DEFAULT FALSE;
+
+-- ============================================================
+-- FECHA: 2026-07-10
+-- CAMBIO: Agregar responsable del equipo.
+-- Los equipos existentes quedan temporalmente como "SIN ASIGNAR"
+-- y pueden actualizarse posteriormente desde el sistema.
+-- ============================================================
+
+ALTER TABLE equipos
+  ADD COLUMN responsable VARCHAR(150) NOT NULL DEFAULT 'SIN ASIGNAR'
+    AFTER area;
