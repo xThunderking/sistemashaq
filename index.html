@@ -9,17 +9,20 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/src/style.css" />
+    <link rel="stylesheet" href="/src/areas.css" />
   </head>
   <body>
     <div class="shell">
       <aside class="sidebar">
         <div class="brand"><span class="brand-mark">H</span><div><strong>HAQ</strong><small>Control de activos</small></div></div>
-        <nav><button class="nav-item active"><span>▦</span> Equipos</button></nav>
+        <nav><button class="nav-item active" data-view="equipment"><span>▦</span> Equipos</button><button class="nav-item" data-view="areas"><span>⌑</span> Áreas</button></nav>
         <div class="side-foot"><span class="status-dot"></span><div><strong>Sistema activo</strong><small>Amazon Aurora</small></div></div>
       </aside>
 
       <main>
-        <header><div><p class="eyebrow">INVENTARIO</p><h1>Control de equipos</h1><p class="subtitle">Administra los activos tecnológicos de tu organización.</p></div><button id="newButton" class="primary">＋ Agregar equipo</button></header>
+        <header><div><p class="eyebrow" id="pageEyebrow">INVENTARIO</p><h1 id="pageTitle">Control de equipos</h1><p class="subtitle" id="pageSubtitle">Administra los activos tecnológicos de tu organización.</p></div><button id="newButton" class="primary">＋ Agregar equipo</button></header>
+
+        <div id="equipmentView">
 
         <section class="stats">
           <article><span class="stat-icon blue">▣</span><div><small>Total de equipos</small><strong id="totalCount">—</strong></div></article>
@@ -35,6 +38,15 @@
           </div>
           <footer class="table-footer"><span id="resultCount">0 equipos</span></footer>
         </section>
+        </div>
+
+        <div id="areasView" hidden>
+          <section class="panel areas-panel">
+            <div class="toolbar"><div><strong>Áreas registradas</strong><p class="toolbar-copy">Catálogo disponible al registrar un equipo.</p></div><span class="area-total" id="areaTotal">0 áreas</span></div>
+            <div id="areasGrid" class="areas-grid"></div>
+            <div id="areasState" class="state" hidden><span class="empty-icon">⌑</span><p>No hay áreas registradas.</p></div>
+          </section>
+        </div>
       </main>
     </div>
 
@@ -43,10 +55,18 @@
         <div class="modal-head"><div><p class="eyebrow">INVENTARIO</p><h2 id="modalTitle">Agregar equipo</h2></div><button type="button" class="close" id="closeDialog">×</button></div>
         <input type="hidden" id="equipmentId" />
         <label>Número de serie <span>*</span><input id="serialNumber" maxlength="100" required placeholder="Ej. DELL-8X29K1" /></label>
-        <label>Área <span>*</span><input id="area" maxlength="100" required placeholder="Ej. Contabilidad" /></label>
+        <label>Área <span>*</span><select id="area" required><option value="">Selecciona un área</option></select></label>
         <label>Dirección IP <span>*</span><input id="ipAddress" required inputmode="decimal" placeholder="Ej. 192.168.1.25" /></label>
         <p id="formError" class="form-error"></p>
         <div class="modal-actions"><button type="button" class="secondary" id="cancelDialog">Cancelar</button><button type="submit" class="primary" id="saveButton">Guardar equipo</button></div>
+      </form>
+    </dialog>
+    <dialog id="areaDialog">
+      <form id="areaForm">
+        <div class="modal-head"><div><p class="eyebrow">CATÁLOGO</p><h2>Agregar área</h2></div><button type="button" class="close" id="closeAreaDialog">×</button></div>
+        <label>Nombre del área <span>*</span><input id="areaName" maxlength="100" required placeholder="Ej. FARMACIA" /></label>
+        <p id="areaFormError" class="form-error"></p>
+        <div class="modal-actions"><button type="button" class="secondary" id="cancelAreaDialog">Cancelar</button><button type="submit" class="primary" id="saveAreaButton">Guardar área</button></div>
       </form>
     </dialog>
     <div id="toast" class="toast"></div>

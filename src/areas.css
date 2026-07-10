@@ -1,0 +1,13 @@
+.nav-item { cursor: pointer; margin-bottom: 5px; }
+.nav-item:focus-visible { outline: 2px solid #4388ed; outline-offset: 2px; }
+label select { display: block; width: 100%; margin-top: 7px; border: 1px solid #dce2ea; border-radius: 8px; padding: 12px 13px; font: 400 14px inherit; outline: none; background: #fff; color: #263247; }
+label select:focus { border-color: #4089ef; box-shadow: 0 0 0 3px #4089ef1c; }
+.toolbar-copy { font-size: 12px; color: #8994a6; margin: 4px 0 0; }
+.area-total { font-size: 12px; color: #66758b; background: #f1f5fa; padding: 7px 11px; border-radius: 20px; align-self: center; }
+.areas-grid { padding: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(245px, 1fr)); gap: 12px; }
+.area-card { border: 1px solid #e5eaf1; border-radius: 9px; padding: 15px 16px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.area-card-name { display: flex; align-items: center; gap: 11px; font-size: 13px; font-weight: 600; color: #344158; }
+.area-card-icon { width: 32px; height: 32px; border-radius: 8px; background: #edf4ff; color: #2874e5; display: grid; place-items: center; }
+.area-card .danger { opacity: .55; }
+.area-card:hover .danger { opacity: 1; }
+[hidden] { display: none !important; }
