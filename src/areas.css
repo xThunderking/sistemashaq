@@ -46,6 +46,11 @@ label select:focus { border-color: #4089ef; box-shadow: 0 0 0 3px #4089ef1c; }
 .toolbar-actions { display: flex; gap: 8px; }
 .export-button { color: #167d59; border-color: #bfe5d7; background: #f1fbf7; }
 .export-button:hover { background: #e4f7ef; }
+.command-help { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: -10px 0 17px; padding: 10px 11px; border: 1px solid #dfe7f1; border-radius: 8px; background: #f7f9fc; }
+.command-help small { display: block; color: #8490a3; font-size: 9px; margin-bottom: 4px; }
+.command-help code { color: #2c5f9f; font-size: 10px; overflow-wrap: anywhere; }
+.copy-command { border: 0; border-radius: 6px; padding: 7px 9px; background: #e7f0fd; color: #2569c5; font: 600 10px inherit; cursor: pointer; flex-shrink: 0; }
+.copy-command:hover { background: #d9e8fb; }
 @media (max-width: 850px) {
   body { padding-bottom: 76px; }
   .shell { display: block; }

@@ -65,6 +65,7 @@
         <div class="modal-head"><div><p class="eyebrow">INVENTARIO</p><h2 id="modalTitle">Agregar equipo</h2></div><button type="button" class="close" id="closeDialog">×</button></div>
         <input type="hidden" id="equipmentId" />
         <label>Número de serie <span>*</span><input id="serialNumber" maxlength="100" required placeholder="Ej. DELL-8X29K1" /></label>
+        <div class="command-help"><div><small>Obtener serial en PowerShell</small><code>(Get-CimInstance Win32_BIOS).SerialNumber</code></div><button type="button" class="copy-command" data-command="(Get-CimInstance Win32_BIOS).SerialNumber" title="Copiar comando">Copiar</button></div>
         <label>Área <span>*</span><select id="area" required><option value="">Selecciona un área</option></select></label>
         <label>Responsable <span>*</span><input id="responsable" maxlength="150" required placeholder="Nombre de quien utiliza el equipo" autocomplete="name" /></label>
         <label>Dirección IP <span>*</span><input id="ipAddress" required inputmode="decimal" placeholder="Ej. 192.168.1.25" /></label>

@@ -89,6 +89,7 @@ $('closeDialog').onclick = () => dialog.close(); $('cancelDialog').onclick = () 
 $('closeAreaDialog').onclick = () => areaDialog.close(); $('cancelAreaDialog').onclick = () => areaDialog.close();
 $('closeDeviceDialog').onclick = () => deviceDialog.close();
 $('closeLaptopDialog').onclick = () => laptopDialog.close(); $('cancelLaptopDialog').onclick = () => laptopDialog.close();
+document.querySelectorAll('.copy-command').forEach(button => button.onclick = async () => { try { await navigator.clipboard.writeText(button.dataset.command); const original = button.textContent; button.textContent = 'Copiado ✓'; setTimeout(() => button.textContent = original, 1600); } catch { toast('No fue posible copiar el comando.', true); } });
 $('refreshButton').onclick = loadAll; $('searchInput').oninput = renderEquipment;
 $('exportButton').onclick = async () => {
   const button = $('exportButton'), original = button.innerHTML; button.disabled = true; button.innerHTML = '⌛ <span>Generando...</span>';
