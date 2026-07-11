@@ -43,6 +43,9 @@ label select:focus { border-color: #4089ef; box-shadow: 0 0 0 3px #4089ef1c; }
 .device-source { color: #929cac; font-size: 10px; line-height: 1.4; margin: 14px 0 0; }
 .device-error { color: #c33c4d; }
 .official-link { display: inline-block; text-decoration: none; margin-top: 10px; }
+.toolbar-actions { display: flex; gap: 8px; }
+.export-button { color: #167d59; border-color: #bfe5d7; background: #f1fbf7; }
+.export-button:hover { background: #e4f7ef; }
 @media (max-width: 850px) {
   body { padding-bottom: 76px; }
   .shell { display: block; }
@@ -66,6 +69,8 @@ label select:focus { border-color: #4089ef; box-shadow: 0 0 0 3px #4089ef1c; }
   .toolbar { padding: 12px; }
   .search { width: 100%; }
   .ghost { min-width: 44px; min-height: 44px; padding: 8px; }
+  .toolbar-actions { flex-shrink: 0; }
+  .export-button span { display: none; }
   .table-wrap { overflow: visible; padding: 10px; background: #f6f8fb; }
   table, tbody { display: block; width: 100%; }
   thead { display: none; }

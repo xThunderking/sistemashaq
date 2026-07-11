@@ -10,9 +10,13 @@
   },
   "dependencies": {
     "aws-ssl-profiles": "^1.1.2",
+    "exceljs": "^4.4.0",
     "mysql2": "^3.14.3"
   },
   "devDependencies": {
     "vite": "^7.0.0"
+  },
+  "overrides": {
+    "uuid": "^11.1.1"
   }
 }

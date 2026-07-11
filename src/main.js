@@ -90,6 +90,10 @@ $('closeAreaDialog').onclick = () => areaDialog.close(); $('cancelAreaDialog').o
 $('closeDeviceDialog').onclick = () => deviceDialog.close();
 $('closeLaptopDialog').onclick = () => laptopDialog.close(); $('cancelLaptopDialog').onclick = () => laptopDialog.close();
 $('refreshButton').onclick = loadAll; $('searchInput').oninput = renderEquipment;
+$('exportButton').onclick = async () => {
+  const button = $('exportButton'), original = button.innerHTML; button.disabled = true; button.innerHTML = '⌛ <span>Generando...</span>';
+  try { const response = await fetch('/api/exportar'); if (!response.ok) { const data = await response.json(); throw new Error(data.error || 'No fue posible generar el archivo.'); } const blob = await response.blob(); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = `inventario-haq-${new Date().toISOString().slice(0, 10)}.xlsx`; document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url); toast('Inventario exportado'); } catch (error) { toast(error.message, true); } finally { button.disabled = false; button.innerHTML = original; }
+};
 $('laptopSearchInput').oninput = renderLaptops;
 dialog.onclick = e => { if (e.target === dialog) dialog.close(); }; areaDialog.onclick = e => { if (e.target === areaDialog) areaDialog.close(); }; deviceDialog.onclick = e => { if (e.target === deviceDialog) deviceDialog.close(); };
 laptopDialog.onclick = e => { if (e.target === laptopDialog) laptopDialog.close(); };
