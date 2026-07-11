@@ -1,6 +1,7 @@
 const $ = id => document.getElementById(id);
 const body = $('equipmentBody'), state = $('state'), dialog = $('equipmentDialog');
 const form = $('equipmentForm'), areaDialog = $('areaDialog'), areaForm = $('areaForm');
+const deviceDialog = $('deviceDialog');
 let equipment = [], areas = [];
 const auditFields = ['revisionSoftware', 'antivirus', 'usb', 'paginasNoAutorizadas', 'escritorio', 'tiempoBloqueo', 'bloqueoConfiguracion', 'glpi'];
 
@@ -11,7 +12,7 @@ function toast(message, error = false) { const el = $('toast'); el.textContent =
 function renderEquipment() {
   const q = $('searchInput').value.toLowerCase().trim();
   const rows = equipment.filter(e => [e.serialNumber, e.area, e.responsable, e.ipAddress].some(v => v.toLowerCase().includes(q)));
-  body.innerHTML = rows.map(e => { const checked = auditFields.filter(field => Boolean(e[field])).length; const pending = auditFields.length - checked; return `<tr><td data-label="Número de serie">${escapeHtml(e.serialNumber)}</td><td data-label="Área"><span class="area-pill">${escapeHtml(e.area)}</span></td><td data-label="Responsable">${escapeHtml(e.responsable)}</td><td data-label="Dirección IP"><span class="ip">${escapeHtml(e.ipAddress)}</span></td><td data-label="Auditoría 2026"><span class="audit-status ${pending === 0 ? 'complete' : 'pending'}">${pending === 0 ? '✓ Revisada' : `◷ ${pending} pendiente${pending === 1 ? '' : 's'}`}</span></td><td data-label="Fecha de registro">${formatDate(e.createdAt)}</td><td class="actions"><button class="icon-button edit" data-id="${e.id}" title="Editar" aria-label="Editar equipo">✎ <span>Editar</span></button><button class="icon-button danger delete" data-id="${e.id}" title="Eliminar" aria-label="Eliminar equipo">⌫ <span>Eliminar</span></button></td></tr>`; }).join('');
+  body.innerHTML = rows.map(e => { const checked = auditFields.filter(field => Boolean(e[field])).length; const pending = auditFields.length - checked; return `<tr><td data-label="Número de serie">${escapeHtml(e.serialNumber)}</td><td data-label="Área"><span class="area-pill">${escapeHtml(e.area)}</span></td><td data-label="Responsable">${escapeHtml(e.responsable)}</td><td data-label="Dirección IP"><span class="ip">${escapeHtml(e.ipAddress)}</span></td><td data-label="Auditoría 2026"><span class="audit-status ${pending === 0 ? 'complete' : 'pending'}">${pending === 0 ? '✓ Revisada' : `◷ ${pending} pendiente${pending === 1 ? '' : 's'}`}</span></td><td data-label="Fecha de registro">${formatDate(e.createdAt)}</td><td class="actions"><button class="icon-button edit" data-id="${e.id}" title="Editar" aria-label="Editar equipo">✎ <span>Editar</span></button><button class="icon-button device" data-id="${e.id}" title="Información Lenovo" aria-label="Ver información del equipo">▣ <span>Equipo</span></button><button class="icon-button danger delete" data-id="${e.id}" title="Eliminar" aria-label="Eliminar equipo">⌫ <span>Eliminar</span></button></td></tr>`; }).join('');
   state.hidden = rows.length > 0;
   if (!rows.length) state.innerHTML = `<span class="empty-icon">▧</span><p>${q ? 'No se encontraron coincidencias.' : 'Aún no hay equipos registrados.'}</p>`;
   $('resultCount').textContent = `${rows.length} ${rows.length === 1 ? 'equipo' : 'equipos'}`;
@@ -52,18 +53,36 @@ function switchView(view) {
 
 function openEquipmentForm(item) { form.reset(); $('formError').textContent = ''; $('equipmentId').value = item?.id || ''; $('modalTitle').textContent = item ? 'Editar equipo' : 'Agregar equipo'; $('serialNumber').value = item?.serialNumber || ''; $('area').value = item?.area || ''; $('responsable').value = item?.responsable || ''; $('ipAddress').value = item?.ipAddress || ''; auditFields.forEach(field => $(field).checked = Boolean(item?.[field])); dialog.showModal(); $('serialNumber').focus(); }
 function openAreaForm() { areaForm.reset(); $('areaFormError').textContent = ''; areaDialog.showModal(); $('areaName').focus(); }
+async function openDeviceInfo(item) {
+  $('deviceInfo').hidden = true; $('deviceState').hidden = false;
+  $('deviceState').innerHTML = '<span class="loader"></span><p>Consultando información en Lenovo...</p>';
+  deviceDialog.showModal();
+  try {
+    const response = await fetch(`/api/lenovo/${item.id}`), data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'No fue posible consultar Lenovo.');
+    $('deviceSerial').textContent = data.serialNumber; $('deviceModel').textContent = data.modelo;
+    $('deviceMtm').textContent = data.mtm; $('deviceFamily').textContent = data.familia;
+    $('deviceWarranty').textContent = data.estadoGarantia; $('deviceConfiguration').textContent = data.configuracionOriginal;
+    $('deviceState').hidden = true; $('deviceInfo').hidden = false;
+  } catch (error) {
+    const url = `https://pcsupport.lenovo.com/us/en/warranty-lookup#/search?serial=${encodeURIComponent(item.serialNumber)}`;
+    $('deviceState').innerHTML = `<p class="device-error">${escapeHtml(error.message)}</p><a class="primary official-link" href="${url}" target="_blank" rel="noopener">Consultar en Lenovo</a>`;
+  }
+}
 
 document.querySelectorAll('.nav-item').forEach(button => button.onclick = () => switchView(button.dataset.view));
 $('newButton').onclick = e => e.currentTarget.dataset.action === 'area' ? openAreaForm() : openEquipmentForm();
 $('closeDialog').onclick = () => dialog.close(); $('cancelDialog').onclick = () => dialog.close();
 $('closeAreaDialog').onclick = () => areaDialog.close(); $('cancelAreaDialog').onclick = () => areaDialog.close();
+$('closeDeviceDialog').onclick = () => deviceDialog.close();
 $('refreshButton').onclick = loadAll; $('searchInput').oninput = renderEquipment;
-dialog.onclick = e => { if (e.target === dialog) dialog.close(); }; areaDialog.onclick = e => { if (e.target === areaDialog) areaDialog.close(); };
+dialog.onclick = e => { if (e.target === dialog) dialog.close(); }; areaDialog.onclick = e => { if (e.target === areaDialog) areaDialog.close(); }; deviceDialog.onclick = e => { if (e.target === deviceDialog) deviceDialog.close(); };
 
 body.onclick = async e => {
-  const id = e.target.dataset.id; if (!id) return; const item = equipment.find(x => String(x.id) === id);
-  if (e.target.classList.contains('edit')) openEquipmentForm(item);
-  if (e.target.classList.contains('delete')) { if (!confirm(`¿Eliminar el equipo ${item.serialNumber}?`)) return; try { const r = await fetch(`/api/equipos/${id}`, { method: 'DELETE' }); const d = await r.json(); if (!r.ok) throw new Error(d.error); toast('Equipo eliminado'); await loadEquipment(); } catch (err) { toast(err.message, true); } }
+  const button = e.target.closest('button[data-id]'); if (!button) return; const id = button.dataset.id; const item = equipment.find(x => String(x.id) === id);
+  if (button.classList.contains('edit')) openEquipmentForm(item);
+  if (button.classList.contains('device')) openDeviceInfo(item);
+  if (button.classList.contains('delete')) { if (!confirm(`¿Eliminar el equipo ${item.serialNumber}?`)) return; try { const r = await fetch(`/api/equipos/${id}`, { method: 'DELETE' }); const d = await r.json(); if (!r.ok) throw new Error(d.error); toast('Equipo eliminado'); await loadEquipment(); } catch (err) { toast(err.message, true); } }
 };
 $('areasGrid').onclick = async e => {
   if (!e.target.classList.contains('delete-area')) return; const id = e.target.dataset.id; const item = areas.find(a => String(a.id) === id);

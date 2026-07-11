@@ -84,6 +84,23 @@
         <div class="modal-actions"><button type="button" class="secondary" id="cancelAreaDialog">Cancelar</button><button type="submit" class="primary" id="saveAreaButton">Guardar área</button></div>
       </form>
     </dialog>
+    <dialog id="deviceDialog" class="device-dialog">
+      <div class="device-modal">
+        <div class="modal-head"><div><p class="eyebrow">LENOVO</p><h2>Información del equipo</h2></div><button type="button" class="close" id="closeDeviceDialog">×</button></div>
+        <div id="deviceState" class="device-state"><span class="loader"></span><p>Consultando información en Lenovo...</p></div>
+        <div id="deviceInfo" hidden>
+          <div class="device-summary"><span class="device-icon">▣</span><div><small>NÚMERO DE SERIE</small><strong id="deviceSerial"></strong></div></div>
+          <dl class="device-details">
+            <div><dt>Modelo</dt><dd id="deviceModel"></dd></div>
+            <div><dt>Machine Type Model (MTM)</dt><dd id="deviceMtm"></dd></div>
+            <div><dt>Familia</dt><dd id="deviceFamily"></dd></div>
+            <div><dt>Estado de garantía</dt><dd id="deviceWarranty"></dd></div>
+            <div class="full"><dt>Configuración original</dt><dd id="deviceConfiguration" class="configuration"></dd></div>
+          </dl>
+          <p class="device-source">Información obtenida del soporte oficial de Lenovo y guardada para futuras consultas.</p>
+        </div>
+      </div>
+    </dialog>
     <div id="toast" class="toast"></div>
     <script type="module" src="/src/main.js"></script>
   </body>

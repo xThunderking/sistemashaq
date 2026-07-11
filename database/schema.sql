@@ -50,3 +50,19 @@ CREATE TABLE IF NOT EXISTS auditoria_2026 (
   CONSTRAINT fk_auditoria_equipo FOREIGN KEY (equipo_id)
     REFERENCES equipos (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- Datos obtenidos bajo demanda desde el soporte oficial de Lenovo.
+CREATE TABLE IF NOT EXISTS informacion_lenovo (
+  equipo_id BIGINT UNSIGNED NOT NULL,
+  modelo VARCHAR(255) NULL,
+  mtm VARCHAR(100) NULL,
+  familia VARCHAR(255) NULL,
+  configuracion_original TEXT NULL,
+  estado_garantia VARCHAR(100) NULL,
+  inicio_garantia DATE NULL,
+  fin_garantia DATE NULL,
+  consultado_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (equipo_id),
+  CONSTRAINT fk_lenovo_equipo FOREIGN KEY (equipo_id)
+    REFERENCES equipos (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
