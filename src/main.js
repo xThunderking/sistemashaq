@@ -2,7 +2,8 @@ const $ = id => document.getElementById(id);
 const body = $('equipmentBody'), state = $('state'), dialog = $('equipmentDialog');
 const form = $('equipmentForm'), areaDialog = $('areaDialog'), areaForm = $('areaForm');
 const deviceDialog = $('deviceDialog');
-let equipment = [], areas = [];
+const laptopDialog = $('laptopDialog'), laptopForm = $('laptopForm'), laptopBody = $('laptopBody');
+let equipment = [], areas = [], laptops = [];
 const auditFields = ['revisionSoftware', 'antivirus', 'usb', 'paginasNoAutorizadas', 'escritorio', 'tiempoBloqueo', 'bloqueoConfiguracion', 'glpi'];
 
 const escapeHtml = (value = '') => String(value).replace(/[&<>'"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[c]);
@@ -22,11 +23,20 @@ function renderEquipment() {
 }
 
 function renderAreas() {
-  $('area').innerHTML = '<option value="">Selecciona un área</option>' + areas.map(a => `<option value="${escapeHtml(a.nombre)}">${escapeHtml(a.nombre)}</option>`).join('');
+  const options = '<option value="">Selecciona un área</option>' + areas.map(a => `<option value="${escapeHtml(a.nombre)}">${escapeHtml(a.nombre)}</option>`).join('');
+  $('area').innerHTML = options; $('laptopArea').innerHTML = options;
   $('areasGrid').innerHTML = areas.map(a => `<article class="area-card"><div class="area-card-name"><span class="area-card-icon">⌑</span>${escapeHtml(a.nombre)}</div><button class="icon-button danger delete-area" data-id="${a.id}" title="Eliminar área">⌫</button></article>`).join('');
   $('areasState').hidden = areas.length > 0;
   $('areaTotal').textContent = `${areas.length} ${areas.length === 1 ? 'área' : 'áreas'}`;
   $('areaCount').textContent = areas.length;
+}
+function renderLaptops() {
+  const q = $('laptopSearchInput').value.toLowerCase().trim();
+  const rows = laptops.filter(item => [item.serialNumber, item.area, item.responsable].some(value => value.toLowerCase().includes(q)));
+  laptopBody.innerHTML = rows.map(item => `<tr><td data-label="Número de serie">${escapeHtml(item.serialNumber)}</td><td data-label="Área"><span class="area-pill">${escapeHtml(item.area)}</span></td><td data-label="Responsable">${escapeHtml(item.responsable)}</td><td data-label="Fecha de registro">${formatDate(item.createdAt)}</td><td class="actions"><button class="icon-button edit-laptop" data-id="${item.id}" aria-label="Editar laptop">✎ <span>Editar</span></button><button class="icon-button device-laptop" data-id="${item.id}" aria-label="Ver información Lenovo">▣ <span>Equipo</span></button><button class="icon-button danger delete-laptop" data-id="${item.id}" aria-label="Eliminar laptop">⌫ <span>Eliminar</span></button></td></tr>`).join('');
+  $('laptopState').hidden = rows.length > 0;
+  if (!rows.length) $('laptopState').innerHTML = `<span class="empty-icon">▱</span><p>${q ? 'No se encontraron coincidencias.' : 'Aún no hay laptops registradas.'}</p>`;
+  $('laptopCount').textContent = `${rows.length} ${rows.length === 1 ? 'laptop' : 'laptops'}`;
 }
 
 async function loadEquipment() {
@@ -38,27 +48,30 @@ async function loadAreas() {
   try { const res = await fetch('/api/areas'); const data = await res.json(); if (!res.ok) throw new Error(data.error); areas = data; renderAreas(); }
   catch (e) { toast(e.message || 'No fue posible cargar las áreas.', true); }
 }
-async function loadAll() { await Promise.all([loadEquipment(), loadAreas()]); }
+async function loadLaptops() { try { const res = await fetch('/api/laptops'), data = await res.json(); if (!res.ok) throw new Error(data.error); laptops = data; renderLaptops(); } catch (e) { $('laptopState').innerHTML = `<span class="empty-icon">!</span><p>${escapeHtml(e.message)}</p>`; toast(e.message, true); } }
+async function loadAll() { await Promise.all([loadEquipment(), loadAreas(), loadLaptops()]); }
 
 function switchView(view) {
   const isAreas = view === 'areas';
-  $('equipmentView').hidden = isAreas; $('areasView').hidden = !isAreas;
+  const isLaptops = view === 'laptops';
+  $('equipmentView').hidden = isAreas || isLaptops; $('areasView').hidden = !isAreas; $('laptopsView').hidden = !isLaptops;
   document.querySelectorAll('.nav-item').forEach(button => button.classList.toggle('active', button.dataset.view === view));
   $('pageEyebrow').textContent = isAreas ? 'CATÁLOGO' : 'INVENTARIO';
-  $('pageTitle').textContent = isAreas ? 'Áreas' : 'Control de equipos';
-  $('pageSubtitle').textContent = isAreas ? 'Administra las áreas disponibles en el sistema.' : 'Administra los activos tecnológicos de tu organización.';
-  $('newButton').textContent = isAreas ? '＋ Agregar área' : '＋ Agregar equipo';
-  $('newButton').dataset.action = isAreas ? 'area' : 'equipment';
+  $('pageTitle').textContent = isAreas ? 'Áreas' : isLaptops ? 'Control de laptops' : 'Control de equipos';
+  $('pageSubtitle').textContent = isAreas ? 'Administra las áreas disponibles en el sistema.' : isLaptops ? 'Administra las laptops de la organización.' : 'Administra los activos tecnológicos de tu organización.';
+  $('newButton').textContent = isAreas ? '＋ Agregar área' : isLaptops ? '＋ Agregar laptop' : '＋ Agregar equipo';
+  $('newButton').dataset.action = isAreas ? 'area' : isLaptops ? 'laptop' : 'equipment';
 }
 
 function openEquipmentForm(item) { form.reset(); $('formError').textContent = ''; $('equipmentId').value = item?.id || ''; $('modalTitle').textContent = item ? 'Editar equipo' : 'Agregar equipo'; $('serialNumber').value = item?.serialNumber || ''; $('area').value = item?.area || ''; $('responsable').value = item?.responsable || ''; $('ipAddress').value = item?.ipAddress || ''; auditFields.forEach(field => $(field).checked = Boolean(item?.[field])); dialog.showModal(); $('serialNumber').focus(); }
 function openAreaForm() { areaForm.reset(); $('areaFormError').textContent = ''; areaDialog.showModal(); $('areaName').focus(); }
-async function openDeviceInfo(item) {
+function openLaptopForm(item) { laptopForm.reset(); $('laptopFormError').textContent = ''; $('laptopId').value = item?.id || ''; $('laptopModalTitle').textContent = item ? 'Editar laptop' : 'Agregar laptop'; $('laptopSerialNumber').value = item?.serialNumber || ''; $('laptopArea').value = item?.area || ''; $('laptopResponsable').value = item?.responsable || ''; laptopDialog.showModal(); $('laptopSerialNumber').focus(); }
+async function openDeviceInfo(item, type = 'equipment') {
   $('deviceInfo').hidden = true; $('deviceState').hidden = false;
   $('deviceState').innerHTML = '<span class="loader"></span><p>Consultando información en Lenovo...</p>';
   deviceDialog.showModal();
   try {
-    const response = await fetch(`/api/lenovo/${item.id}`), data = await response.json();
+    const response = await fetch(`/api/lenovo/${type === 'laptop' ? 'laptop/' : ''}${item.id}`), data = await response.json();
     if (!response.ok) throw new Error(data.error || 'No fue posible consultar Lenovo.');
     $('deviceSerial').textContent = data.serialNumber; $('deviceModel').textContent = data.modelo;
     $('deviceMtm').textContent = data.mtm; $('deviceFamily').textContent = data.familia;
@@ -71,18 +84,27 @@ async function openDeviceInfo(item) {
 }
 
 document.querySelectorAll('.nav-item').forEach(button => button.onclick = () => switchView(button.dataset.view));
-$('newButton').onclick = e => e.currentTarget.dataset.action === 'area' ? openAreaForm() : openEquipmentForm();
+$('newButton').onclick = e => e.currentTarget.dataset.action === 'area' ? openAreaForm() : e.currentTarget.dataset.action === 'laptop' ? openLaptopForm() : openEquipmentForm();
 $('closeDialog').onclick = () => dialog.close(); $('cancelDialog').onclick = () => dialog.close();
 $('closeAreaDialog').onclick = () => areaDialog.close(); $('cancelAreaDialog').onclick = () => areaDialog.close();
 $('closeDeviceDialog').onclick = () => deviceDialog.close();
+$('closeLaptopDialog').onclick = () => laptopDialog.close(); $('cancelLaptopDialog').onclick = () => laptopDialog.close();
 $('refreshButton').onclick = loadAll; $('searchInput').oninput = renderEquipment;
+$('laptopSearchInput').oninput = renderLaptops;
 dialog.onclick = e => { if (e.target === dialog) dialog.close(); }; areaDialog.onclick = e => { if (e.target === areaDialog) areaDialog.close(); }; deviceDialog.onclick = e => { if (e.target === deviceDialog) deviceDialog.close(); };
+laptopDialog.onclick = e => { if (e.target === laptopDialog) laptopDialog.close(); };
 
 body.onclick = async e => {
   const button = e.target.closest('button[data-id]'); if (!button) return; const id = button.dataset.id; const item = equipment.find(x => String(x.id) === id);
   if (button.classList.contains('edit')) openEquipmentForm(item);
   if (button.classList.contains('device')) openDeviceInfo(item);
   if (button.classList.contains('delete')) { if (!confirm(`¿Eliminar el equipo ${item.serialNumber}?`)) return; try { const r = await fetch(`/api/equipos/${id}`, { method: 'DELETE' }); const d = await r.json(); if (!r.ok) throw new Error(d.error); toast('Equipo eliminado'); await loadEquipment(); } catch (err) { toast(err.message, true); } }
+};
+laptopBody.onclick = async e => {
+  const button = e.target.closest('button[data-id]'); if (!button) return; const item = laptops.find(x => String(x.id) === button.dataset.id);
+  if (button.classList.contains('edit-laptop')) openLaptopForm(item);
+  if (button.classList.contains('device-laptop')) openDeviceInfo(item, 'laptop');
+  if (button.classList.contains('delete-laptop')) { if (!confirm(`¿Eliminar la laptop ${item.serialNumber}?`)) return; try { const r = await fetch(`/api/laptops/${item.id}`, { method: 'DELETE' }), d = await r.json(); if (!r.ok) throw new Error(d.error); toast('Laptop eliminada'); await loadLaptops(); } catch (err) { toast(err.message, true); } }
 };
 $('areasGrid').onclick = async e => {
   if (!e.target.classList.contains('delete-area')) return; const id = e.target.dataset.id; const item = areas.find(a => String(a.id) === id);
@@ -96,6 +118,10 @@ form.onsubmit = async e => {
 areaForm.onsubmit = async e => {
   e.preventDefault(); $('areaFormError').textContent = ''; $('saveAreaButton').disabled = true;
   try { const r = await fetch('/api/areas', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nombre: $('areaName').value }) }); const d = await r.json(); if (!r.ok) throw new Error(d.error); areaDialog.close(); toast('Área registrada'); await loadAreas(); } catch (err) { $('areaFormError').textContent = err.message || 'No fue posible guardar.'; } finally { $('saveAreaButton').disabled = false; }
+};
+laptopForm.onsubmit = async e => {
+  e.preventDefault(); const id = $('laptopId').value; const payload = { serialNumber: $('laptopSerialNumber').value.trim(), area: $('laptopArea').value, responsable: $('laptopResponsable').value.trim() }; $('laptopFormError').textContent = ''; $('saveLaptopButton').disabled = true;
+  try { const r = await fetch(`/api/laptops${id ? '/' + id : ''}`, { method: id ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }), d = await r.json(); if (!r.ok) throw new Error(d.error); laptopDialog.close(); toast(id ? 'Laptop actualizada' : 'Laptop registrada'); await loadLaptops(); } catch (err) { $('laptopFormError').textContent = err.message; } finally { $('saveLaptopButton').disabled = false; }
 };
 
 switchView('equipment');

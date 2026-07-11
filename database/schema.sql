@@ -66,3 +66,30 @@ CREATE TABLE IF NOT EXISTS informacion_lenovo (
   CONSTRAINT fk_lenovo_equipo FOREIGN KEY (equipo_id)
     REFERENCES equipos (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS laptops (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  serial_number VARCHAR(100) NOT NULL,
+  area VARCHAR(100) NOT NULL,
+  responsable VARCHAR(150) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  CONSTRAINT uq_laptops_serial UNIQUE (serial_number),
+  INDEX idx_laptops_area (area)
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS informacion_lenovo_laptops (
+  laptop_id BIGINT UNSIGNED NOT NULL,
+  modelo VARCHAR(255) NULL,
+  mtm VARCHAR(100) NULL,
+  familia VARCHAR(255) NULL,
+  configuracion_original TEXT NULL,
+  estado_garantia VARCHAR(100) NULL,
+  inicio_garantia DATE NULL,
+  fin_garantia DATE NULL,
+  consultado_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (laptop_id),
+  CONSTRAINT fk_lenovo_laptop FOREIGN KEY (laptop_id)
+    REFERENCES laptops (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

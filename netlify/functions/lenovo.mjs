@@ -13,17 +13,19 @@ const clean = value => String(value || '').replace(/<\/td>\s*<td>/gi, ': ').repl
 const normalize = row => ({ serialNumber: row.serialNumber, modelo: row.modelo || 'No disponible', mtm: row.mtm || 'No disponible', familia: row.familia || 'No disponible', configuracionOriginal: row.configuracionOriginal || 'No disponible', estadoGarantia: row.estadoGarantia || 'No disponible', inicioGarantia: row.inicioGarantia, finGarantia: row.finGarantia, cached: true });
 
 export async function handler(event) {
-  const id = event.path.split('/').filter(Boolean).at(-1);
+  const parts = event.path.split('/').filter(Boolean), id = parts.at(-1), isLaptop = parts.at(-2) === 'laptop';
   if (event.httpMethod !== 'GET' || !/^\d+$/.test(id)) return reply(405, { error: 'Solicitud no permitida.' });
   try {
     const db = getPool();
+    const sourceTable = isLaptop ? 'laptops' : 'equipos', infoTable = isLaptop ? 'informacion_lenovo_laptops' : 'informacion_lenovo';
+    const foreignKey = isLaptop ? 'laptop_id' : 'equipo_id';
     const [saved] = await db.execute(`SELECT e.serial_number AS serialNumber, i.modelo, i.mtm, i.familia,
       i.configuracion_original AS configuracionOriginal, i.estado_garantia AS estadoGarantia,
       i.inicio_garantia AS inicioGarantia, i.fin_garantia AS finGarantia
-      FROM equipos e JOIN informacion_lenovo i ON i.equipo_id=e.id WHERE e.id=?`, [Number(id)]);
+      FROM ${sourceTable} e JOIN ${infoTable} i ON i.${foreignKey}=e.id WHERE e.id=?`, [Number(id)]);
     if (saved[0]) return reply(200, normalize(saved[0]));
 
-    const [equipos] = await db.execute('SELECT serial_number AS serialNumber FROM equipos WHERE id=?', [Number(id)]);
+    const [equipos] = await db.execute(`SELECT serial_number AS serialNumber FROM ${sourceTable} WHERE id=?`, [Number(id)]);
     if (!equipos[0]) return reply(404, { error: 'Equipo no encontrado.' });
     const serial = equipos[0].serialNumber.trim().toUpperCase();
     const response = await fetch('https://pcsupport.lenovo.com/us/en/api/v4/upsell/redport/getIbaseInfo', {
@@ -48,8 +50,8 @@ export async function handler(event) {
       configuracionOriginal: clean(machine.specification) || 'No disponible', estadoGarantia: warranty,
       inicioGarantia: start, finGarantia: end, cached: false
     };
-    await db.execute(`INSERT INTO informacion_lenovo
-      (equipo_id, modelo, mtm, familia, configuracion_original, estado_garantia, inicio_garantia, fin_garantia)
+    await db.execute(`INSERT INTO ${infoTable}
+      (${foreignKey}, modelo, mtm, familia, configuracion_original, estado_garantia, inicio_garantia, fin_garantia)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, [Number(id), info.modelo, info.mtm, info.familia, info.configuracionOriginal, info.estadoGarantia, start, end]);
     return reply(200, info);
   } catch (error) {
