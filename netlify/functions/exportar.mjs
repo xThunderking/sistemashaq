@@ -10,7 +10,7 @@ const getPool = () => pool ||= mysql.createPool({
   waitForConnections: true, connectionLimit: 2, queueLimit: 0, enableKeepAlive: true
 });
 const json = (statusCode, body) => ({ statusCode, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-const yesNo = value => Number(value) ? 'REVISADO' : 'PENDIENTE';
+const auditStatus = row => ['revision_software', 'antivirus', 'usb', 'paginas_no_autorizadas', 'escritorio', 'tiempo_bloqueo', 'bloqueo_configuracion', 'glpi'].every(field => Number(row[field])) ? 'REVISADO' : 'PENDIENTE';
 const styleSheet = sheet => {
   sheet.views = [{ state: 'frozen', ySplit: 1 }]; sheet.autoFilter = { from: 'A1', to: `${sheet.getColumn(sheet.columnCount).letter}1` };
   sheet.getRow(1).height = 28; sheet.getRow(1).eachCell(cell => { cell.font = { bold: true, color: { argb: 'FFFFFFFF' } }; cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1769D2' } }; cell.alignment = { vertical: 'middle' }; });
@@ -24,21 +24,21 @@ export async function handler(event) {
     const db = getPool();
     const [equipos] = await db.execute(`SELECT e.serial_number, e.area, e.responsable, e.ip_address,
       a.revision_software, a.antivirus, a.usb, a.paginas_no_autorizadas, a.escritorio, a.tiempo_bloqueo, a.bloqueo_configuracion, a.glpi,
-      i.modelo, i.mtm, i.familia, i.configuracion_original, i.estado_garantia, e.created_at
+      i.modelo, i.mtm, i.familia, i.estado_garantia, e.created_at
       FROM equipos e LEFT JOIN auditoria_2026 a ON a.equipo_id=e.id LEFT JOIN informacion_lenovo i ON i.equipo_id=e.id ORDER BY e.area, e.serial_number`);
     const [laptops] = await db.execute(`SELECT l.serial_number, l.area, l.responsable, i.modelo, i.mtm, i.familia,
-      i.configuracion_original, i.estado_garantia, l.created_at FROM laptops l
+      i.estado_garantia, l.created_at FROM laptops l
       LEFT JOIN informacion_lenovo_laptops i ON i.laptop_id=l.id ORDER BY l.area, l.serial_number`);
     const workbook = new ExcelJS.Workbook(); workbook.creator = 'Sistema HAQ'; workbook.created = new Date();
     const eq = workbook.addWorksheet('Equipos');
     eq.columns = [
       { header: 'Número de serie', key: 'serial_number' }, { header: 'Área', key: 'area' }, { header: 'Responsable', key: 'responsable' }, { header: 'Dirección IP', key: 'ip_address' },
-      { header: 'Revisión de software', key: 'revision_software' }, { header: 'Antivirus', key: 'antivirus' }, { header: 'USB', key: 'usb' }, { header: 'Páginas no autorizadas', key: 'paginas_no_autorizadas' }, { header: 'Escritorio', key: 'escritorio' }, { header: 'Tiempo de bloqueo', key: 'tiempo_bloqueo' }, { header: 'Bloqueo de configuración', key: 'bloqueo_configuracion' }, { header: 'GLPI', key: 'glpi' },
-      { header: 'Modelo Lenovo', key: 'modelo' }, { header: 'MTM', key: 'mtm' }, { header: 'Familia', key: 'familia' }, { header: 'Configuración original', key: 'configuracion_original' }, { header: 'Garantía', key: 'estado_garantia' }, { header: 'Fecha de registro', key: 'created_at' }
+      { header: 'Auditoría 2026', key: 'auditoria' },
+      { header: 'Modelo Lenovo', key: 'modelo' }, { header: 'MTM', key: 'mtm' }, { header: 'Familia', key: 'familia' }, { header: 'Garantía', key: 'estado_garantia' }, { header: 'Fecha de registro', key: 'created_at' }
     ];
-    equipos.forEach(row => eq.addRow({ ...row, revision_software: yesNo(row.revision_software), antivirus: yesNo(row.antivirus), usb: yesNo(row.usb), paginas_no_autorizadas: yesNo(row.paginas_no_autorizadas), escritorio: yesNo(row.escritorio), tiempo_bloqueo: yesNo(row.tiempo_bloqueo), bloqueo_configuracion: yesNo(row.bloqueo_configuracion), glpi: yesNo(row.glpi) })); styleSheet(eq);
+    equipos.forEach(row => eq.addRow({ ...row, auditoria: auditStatus(row) })); styleSheet(eq);
     const lap = workbook.addWorksheet('Laptops');
-    lap.columns = [{ header: 'Número de serie', key: 'serial_number' }, { header: 'Área', key: 'area' }, { header: 'Responsable', key: 'responsable' }, { header: 'Modelo Lenovo', key: 'modelo' }, { header: 'MTM', key: 'mtm' }, { header: 'Familia', key: 'familia' }, { header: 'Configuración original', key: 'configuracion_original' }, { header: 'Garantía', key: 'estado_garantia' }, { header: 'Fecha de registro', key: 'created_at' }];
+    lap.columns = [{ header: 'Número de serie', key: 'serial_number' }, { header: 'Área', key: 'area' }, { header: 'Responsable', key: 'responsable' }, { header: 'Modelo Lenovo', key: 'modelo' }, { header: 'MTM', key: 'mtm' }, { header: 'Familia', key: 'familia' }, { header: 'Garantía', key: 'estado_garantia' }, { header: 'Fecha de registro', key: 'created_at' }];
     laptops.forEach(row => lap.addRow(row)); styleSheet(lap);
     const buffer = await workbook.xlsx.writeBuffer();
     return { statusCode: 200, isBase64Encoded: true, headers: { 'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'Content-Disposition': `attachment; filename="inventario-haq-${new Date().toISOString().slice(0, 10)}.xlsx"`, 'Cache-Control': 'no-store' }, body: Buffer.from(buffer).toString('base64') };
