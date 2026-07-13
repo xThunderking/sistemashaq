@@ -66,6 +66,11 @@ function switchView(view) {
 function openEquipmentForm(item) { form.reset(); $('formError').textContent = ''; $('equipmentId').value = item?.id || ''; $('modalTitle').textContent = item ? 'Editar equipo' : 'Agregar equipo'; $('serialNumber').value = item?.serialNumber || ''; $('area').value = item?.area || ''; $('responsable').value = item?.responsable || ''; $('ipAddress').value = item?.ipAddress || ''; auditFields.forEach(field => $(field).checked = Boolean(item?.[field])); dialog.showModal(); $('serialNumber').focus(); }
 function openAreaForm() { areaForm.reset(); $('areaFormError').textContent = ''; areaDialog.showModal(); $('areaName').focus(); }
 function openLaptopForm(item) { laptopForm.reset(); $('laptopFormError').textContent = ''; $('laptopId').value = item?.id || ''; $('laptopModalTitle').textContent = item ? 'Editar laptop' : 'Agregar laptop'; $('laptopSerialNumber').value = item?.serialNumber || ''; $('laptopArea').value = item?.area || ''; $('laptopResponsable').value = item?.responsable || ''; laptopDialog.showModal(); $('laptopSerialNumber').focus(); }
+async function saveLenovoAutomatically(id, type = 'equipment') {
+  const path = type === 'laptop' ? `/api/lenovo/laptop/${id}` : `/api/lenovo/${id}`;
+  try { const response = await fetch(path); if (!response.ok) throw new Error(); return true; }
+  catch { return false; }
+}
 async function openDeviceInfo(item, type = 'equipment') {
   $('deviceInfo').hidden = true; $('deviceState').hidden = false;
   $('deviceState').innerHTML = '<span class="loader"></span><p>Consultando información en Lenovo...</p>';
@@ -95,6 +100,24 @@ $('exportButton').onclick = async () => {
   const button = $('exportButton'), original = button.innerHTML; button.disabled = true; button.innerHTML = '⌛ <span>Generando...</span>';
   try { const response = await fetch('/api/exportar'); if (!response.ok) { const data = await response.json(); throw new Error(data.error || 'No fue posible generar el archivo.'); } const blob = await response.blob(); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = `inventario-haq-${new Date().toISOString().slice(0, 10)}.xlsx`; document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url); toast('Inventario exportado'); } catch (error) { toast(error.message, true); } finally { button.disabled = false; button.innerHTML = original; }
 };
+$('syncLenovoButton').onclick = async () => {
+  const button = $('syncLenovoButton');
+  const items = [...equipment.map(item => ({ id: item.id, type: 'equipment' })), ...laptops.map(item => ({ id: item.id, type: 'laptop' }))];
+  if (!items.length) return toast('No hay equipos ni laptops registrados.', true);
+  if (!confirm(`Se consultará la información Lenovo de ${items.length} registro${items.length === 1 ? '' : 's'}. ¿Continuar?`)) return;
+  const original = button.innerHTML; button.disabled = true;
+  let completed = 0, success = 0, failed = 0, cursor = 0;
+  const updateProgress = () => { button.innerHTML = `⌛ <span>Lenovo ${completed}/${items.length}</span>`; };
+  updateProgress();
+  const worker = async () => {
+    while (cursor < items.length) {
+      const item = items[cursor++];
+      try { const path = item.type === 'laptop' ? `/api/lenovo/laptop/${item.id}` : `/api/lenovo/${item.id}`; const response = await fetch(path); if (!response.ok) throw new Error(); success++; } catch { failed++; } finally { completed++; updateProgress(); }
+    }
+  };
+  try { await Promise.all(Array.from({ length: Math.min(3, items.length) }, () => worker())); toast(failed ? `${success} guardados · ${failed} sin información` : `Información Lenovo guardada para ${success} registros`, failed > 0); }
+  finally { button.disabled = false; button.innerHTML = original; }
+};
 $('laptopSearchInput').oninput = renderLaptops;
 dialog.onclick = e => { if (e.target === dialog) dialog.close(); }; areaDialog.onclick = e => { if (e.target === areaDialog) areaDialog.close(); }; deviceDialog.onclick = e => { if (e.target === deviceDialog) deviceDialog.close(); };
 laptopDialog.onclick = e => { if (e.target === laptopDialog) laptopDialog.close(); };
@@ -118,7 +141,7 @@ $('areasGrid').onclick = async e => {
 };
 form.onsubmit = async e => {
   e.preventDefault(); const id = $('equipmentId').value; const auditoria = Object.fromEntries(auditFields.map(field => [field, $(field).checked])); const payload = { serialNumber: $('serialNumber').value.trim(), area: $('area').value, responsable: $('responsable').value.trim(), ipAddress: $('ipAddress').value.trim(), auditoria }; $('formError').textContent = ''; $('saveButton').disabled = true;
-  try { const r = await fetch(`/api/equipos${id ? '/' + id : ''}`, { method: id ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); const d = await r.json(); if (!r.ok) throw new Error(d.error); dialog.close(); toast(id ? 'Equipo actualizado' : 'Equipo registrado'); await loadEquipment(); } catch (err) { $('formError').textContent = err.message || 'No fue posible guardar.'; } finally { $('saveButton').disabled = false; }
+  try { const r = await fetch(`/api/equipos${id ? '/' + id : ''}`, { method: id ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); const d = await r.json(); if (!r.ok) throw new Error(d.error); dialog.close(); toast(id ? 'Equipo actualizado' : 'Equipo registrado · consultando Lenovo...'); await loadEquipment(); if (!id) { const saved = await saveLenovoAutomatically(d.id); toast(saved ? 'Equipo e información Lenovo guardados' : 'Equipo guardado; Lenovo no respondió', !saved); } } catch (err) { $('formError').textContent = err.message || 'No fue posible guardar.'; } finally { $('saveButton').disabled = false; }
 };
 areaForm.onsubmit = async e => {
   e.preventDefault(); $('areaFormError').textContent = ''; $('saveAreaButton').disabled = true;
@@ -126,7 +149,7 @@ areaForm.onsubmit = async e => {
 };
 laptopForm.onsubmit = async e => {
   e.preventDefault(); const id = $('laptopId').value; const payload = { serialNumber: $('laptopSerialNumber').value.trim(), area: $('laptopArea').value, responsable: $('laptopResponsable').value.trim() }; $('laptopFormError').textContent = ''; $('saveLaptopButton').disabled = true;
-  try { const r = await fetch(`/api/laptops${id ? '/' + id : ''}`, { method: id ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }), d = await r.json(); if (!r.ok) throw new Error(d.error); laptopDialog.close(); toast(id ? 'Laptop actualizada' : 'Laptop registrada'); await loadLaptops(); } catch (err) { $('laptopFormError').textContent = err.message; } finally { $('saveLaptopButton').disabled = false; }
+  try { const r = await fetch(`/api/laptops${id ? '/' + id : ''}`, { method: id ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }), d = await r.json(); if (!r.ok) throw new Error(d.error); laptopDialog.close(); toast(id ? 'Laptop actualizada' : 'Laptop registrada · consultando Lenovo...'); await loadLaptops(); if (!id) { const saved = await saveLenovoAutomatically(d.id, 'laptop'); toast(saved ? 'Laptop e información Lenovo guardadas' : 'Laptop guardada; Lenovo no respondió', !saved); } } catch (err) { $('laptopFormError').textContent = err.message; } finally { $('saveLaptopButton').disabled = false; }
 };
 
 switchView('equipment');

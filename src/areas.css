@@ -46,6 +46,9 @@ label select:focus { border-color: #4089ef; box-shadow: 0 0 0 3px #4089ef1c; }
 .toolbar-actions { display: flex; gap: 8px; }
 .export-button { color: #167d59; border-color: #bfe5d7; background: #f1fbf7; }
 .export-button:hover { background: #e4f7ef; }
+.lenovo-button { color: #315f9f; border-color: #c8d9ee; background: #f3f7fd; }
+.lenovo-button:hover { background: #e7f0fc; }
+.lenovo-button:disabled, .export-button:disabled { opacity: .65; cursor: wait; }
 .command-help { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: -10px 0 17px; padding: 10px 11px; border: 1px solid #dfe7f1; border-radius: 8px; background: #f7f9fc; }
 .command-help small { display: block; color: #8490a3; font-size: 9px; margin-bottom: 4px; }
 .command-help code { color: #2c5f9f; font-size: 10px; overflow-wrap: anywhere; }
@@ -76,6 +79,7 @@ label select:focus { border-color: #4089ef; box-shadow: 0 0 0 3px #4089ef1c; }
   .ghost { min-width: 44px; min-height: 44px; padding: 8px; }
   .toolbar-actions { flex-shrink: 0; }
   .export-button span { display: none; }
+  .lenovo-button span { display: none; }
   .table-wrap { overflow: visible; padding: 10px; background: #f6f8fb; }
   table, tbody { display: block; width: 100%; }
   thead { display: none; }
