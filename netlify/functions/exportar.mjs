@@ -29,6 +29,7 @@ export async function handler(event) {
     const [laptops] = await db.execute(`SELECT l.serial_number, l.area, l.responsable, i.modelo, i.mtm, i.familia,
       i.estado_garantia, l.created_at FROM laptops l
       LEFT JOIN informacion_lenovo_laptops i ON i.laptop_id=l.id ORDER BY l.area, l.serial_number`);
+    const [servidores] = await db.execute('SELECT serial_number, nombre_servidor, ip_address, created_at FROM servidores ORDER BY nombre_servidor');
     const workbook = new ExcelJS.Workbook(); workbook.creator = 'Sistema HAQ'; workbook.created = new Date();
     const eq = workbook.addWorksheet('Equipos');
     eq.columns = [
@@ -40,6 +41,9 @@ export async function handler(event) {
     const lap = workbook.addWorksheet('Laptops');
     lap.columns = [{ header: 'Número de serie', key: 'serial_number' }, { header: 'Área', key: 'area' }, { header: 'Responsable', key: 'responsable' }, { header: 'Modelo Lenovo', key: 'modelo' }, { header: 'MTM', key: 'mtm' }, { header: 'Familia', key: 'familia' }, { header: 'Garantía', key: 'estado_garantia' }, { header: 'Fecha de registro', key: 'created_at' }];
     laptops.forEach(row => lap.addRow(row)); styleSheet(lap);
+    const srv = workbook.addWorksheet('Servidores');
+    srv.columns = [{ header: 'Número de serie', key: 'serial_number' }, { header: 'Nombre del servidor', key: 'nombre_servidor' }, { header: 'Dirección IP', key: 'ip_address' }, { header: 'Fecha de registro', key: 'created_at' }];
+    servidores.forEach(row => srv.addRow(row)); styleSheet(srv);
     const buffer = await workbook.xlsx.writeBuffer();
     return { statusCode: 200, isBase64Encoded: true, headers: { 'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'Content-Disposition': `attachment; filename="inventario-haq-${new Date().toISOString().slice(0, 10)}.xlsx"`, 'Cache-Control': 'no-store' }, body: Buffer.from(buffer).toString('base64') };
   } catch (error) { console.error('Error exportando inventario', { code: error.code, message: error.message }); return json(500, { error: 'No fue posible generar el archivo Excel.', code: error.code }); }

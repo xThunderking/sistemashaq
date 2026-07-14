@@ -3,7 +3,8 @@ const body = $('equipmentBody'), state = $('state'), dialog = $('equipmentDialog
 const form = $('equipmentForm'), areaDialog = $('areaDialog'), areaForm = $('areaForm');
 const deviceDialog = $('deviceDialog');
 const laptopDialog = $('laptopDialog'), laptopForm = $('laptopForm'), laptopBody = $('laptopBody');
-let equipment = [], areas = [], laptops = [];
+const serverDialog = $('serverDialog'), serverForm = $('serverForm'), serverBody = $('serverBody');
+let equipment = [], areas = [], laptops = [], servers = [];
 const auditFields = ['revisionSoftware', 'antivirus', 'usb', 'paginasNoAutorizadas', 'escritorio', 'tiempoBloqueo', 'bloqueoConfiguracion', 'glpi'];
 
 const escapeHtml = (value = '') => String(value).replace(/[&<>'"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[c]);
@@ -38,6 +39,14 @@ function renderLaptops() {
   if (!rows.length) $('laptopState').innerHTML = `<span class="empty-icon">▱</span><p>${q ? 'No se encontraron coincidencias.' : 'Aún no hay laptops registradas.'}</p>`;
   $('laptopCount').textContent = `${rows.length} ${rows.length === 1 ? 'laptop' : 'laptops'}`;
 }
+function renderServers() {
+  const q = $('serverSearchInput').value.toLowerCase().trim();
+  const rows = servers.filter(item => [item.serialNumber, item.serverName, item.ipAddress].some(value => value.toLowerCase().includes(q)));
+  serverBody.innerHTML = rows.map(item => `<tr><td data-label="Número de serie">${escapeHtml(item.serialNumber)}</td><td data-label="Nombre del servidor">${escapeHtml(item.serverName)}</td><td data-label="Dirección IP"><span class="ip">${escapeHtml(item.ipAddress)}</span></td><td data-label="Fecha de registro">${formatDate(item.createdAt)}</td><td class="actions"><button class="icon-button edit-server" data-id="${item.id}" aria-label="Editar servidor">✎ <span>Editar</span></button><button class="icon-button danger delete-server" data-id="${item.id}" aria-label="Eliminar servidor">⌫ <span>Eliminar</span></button></td></tr>`).join('');
+  $('serverState').hidden = rows.length > 0;
+  if (!rows.length) $('serverState').innerHTML = `<span class="empty-icon">▤</span><p>${q ? 'No se encontraron coincidencias.' : 'Aún no hay servidores registrados.'}</p>`;
+  $('serverCount').textContent = `${rows.length} ${rows.length === 1 ? 'servidor' : 'servidores'}`;
+}
 
 async function loadEquipment() {
   state.hidden = false; state.innerHTML = '<span class="loader"></span><p>Cargando equipos...</p>';
@@ -49,23 +58,26 @@ async function loadAreas() {
   catch (e) { toast(e.message || 'No fue posible cargar las áreas.', true); }
 }
 async function loadLaptops() { try { const res = await fetch('/api/laptops'), data = await res.json(); if (!res.ok) throw new Error(data.error); laptops = data; renderLaptops(); } catch (e) { $('laptopState').innerHTML = `<span class="empty-icon">!</span><p>${escapeHtml(e.message)}</p>`; toast(e.message, true); } }
-async function loadAll() { await Promise.all([loadEquipment(), loadAreas(), loadLaptops()]); }
+async function loadServers() { try { const res = await fetch('/api/servidores'), data = await res.json(); if (!res.ok) throw new Error(data.error); servers = data; renderServers(); } catch (e) { $('serverState').innerHTML = `<span class="empty-icon">!</span><p>${escapeHtml(e.message)}</p>`; toast(e.message, true); } }
+async function loadAll() { await Promise.all([loadEquipment(), loadAreas(), loadLaptops(), loadServers()]); }
 
 function switchView(view) {
   const isAreas = view === 'areas';
   const isLaptops = view === 'laptops';
-  $('equipmentView').hidden = isAreas || isLaptops; $('areasView').hidden = !isAreas; $('laptopsView').hidden = !isLaptops;
+  const isServers = view === 'servers';
+  $('equipmentView').hidden = isAreas || isLaptops || isServers; $('areasView').hidden = !isAreas; $('laptopsView').hidden = !isLaptops; $('serversView').hidden = !isServers;
   document.querySelectorAll('.nav-item').forEach(button => button.classList.toggle('active', button.dataset.view === view));
   $('pageEyebrow').textContent = isAreas ? 'CATÁLOGO' : 'INVENTARIO';
-  $('pageTitle').textContent = isAreas ? 'Áreas' : isLaptops ? 'Control de laptops' : 'Control de equipos';
-  $('pageSubtitle').textContent = isAreas ? 'Administra las áreas disponibles en el sistema.' : isLaptops ? 'Administra las laptops de la organización.' : 'Administra los activos tecnológicos de tu organización.';
-  $('newButton').textContent = isAreas ? '＋ Agregar área' : isLaptops ? '＋ Agregar laptop' : '＋ Agregar equipo';
-  $('newButton').dataset.action = isAreas ? 'area' : isLaptops ? 'laptop' : 'equipment';
+  $('pageTitle').textContent = isAreas ? 'Áreas' : isLaptops ? 'Control de laptops' : isServers ? 'Control de servidores' : 'Control de equipos';
+  $('pageSubtitle').textContent = isAreas ? 'Administra las áreas disponibles en el sistema.' : isLaptops ? 'Administra las laptops de la organización.' : isServers ? 'Administra los servidores de la organización.' : 'Administra los activos tecnológicos de tu organización.';
+  $('newButton').textContent = isAreas ? '＋ Agregar área' : isLaptops ? '＋ Agregar laptop' : isServers ? '＋ Agregar servidor' : '＋ Agregar equipo';
+  $('newButton').dataset.action = isAreas ? 'area' : isLaptops ? 'laptop' : isServers ? 'server' : 'equipment';
 }
 
 function openEquipmentForm(item) { form.reset(); $('formError').textContent = ''; $('equipmentId').value = item?.id || ''; $('modalTitle').textContent = item ? 'Editar equipo' : 'Agregar equipo'; $('serialNumber').value = item?.serialNumber || ''; $('area').value = item?.area || ''; $('responsable').value = item?.responsable || ''; $('ipAddress').value = item?.ipAddress || ''; auditFields.forEach(field => $(field).checked = Boolean(item?.[field])); dialog.showModal(); $('serialNumber').focus(); }
 function openAreaForm() { areaForm.reset(); $('areaFormError').textContent = ''; areaDialog.showModal(); $('areaName').focus(); }
 function openLaptopForm(item) { laptopForm.reset(); $('laptopFormError').textContent = ''; $('laptopId').value = item?.id || ''; $('laptopModalTitle').textContent = item ? 'Editar laptop' : 'Agregar laptop'; $('laptopSerialNumber').value = item?.serialNumber || ''; $('laptopArea').value = item?.area || ''; $('laptopResponsable').value = item?.responsable || ''; laptopDialog.showModal(); $('laptopSerialNumber').focus(); }
+function openServerForm(item) { serverForm.reset(); $('serverFormError').textContent = ''; $('serverId').value = item?.id || ''; $('serverModalTitle').textContent = item ? 'Editar servidor' : 'Agregar servidor'; $('serverSerialNumber').value = item?.serialNumber || ''; $('serverName').value = item?.serverName || ''; $('serverIpAddress').value = item?.ipAddress || ''; serverDialog.showModal(); $('serverSerialNumber').focus(); }
 async function saveLenovoAutomatically(id, type = 'equipment') {
   const path = type === 'laptop' ? `/api/lenovo/laptop/${id}` : `/api/lenovo/${id}`;
   try { const response = await fetch(path); if (!response.ok) throw new Error(); return true; }
@@ -89,11 +101,12 @@ async function openDeviceInfo(item, type = 'equipment') {
 }
 
 document.querySelectorAll('.nav-item').forEach(button => button.onclick = () => switchView(button.dataset.view));
-$('newButton').onclick = e => e.currentTarget.dataset.action === 'area' ? openAreaForm() : e.currentTarget.dataset.action === 'laptop' ? openLaptopForm() : openEquipmentForm();
+$('newButton').onclick = e => e.currentTarget.dataset.action === 'area' ? openAreaForm() : e.currentTarget.dataset.action === 'laptop' ? openLaptopForm() : e.currentTarget.dataset.action === 'server' ? openServerForm() : openEquipmentForm();
 $('closeDialog').onclick = () => dialog.close(); $('cancelDialog').onclick = () => dialog.close();
 $('closeAreaDialog').onclick = () => areaDialog.close(); $('cancelAreaDialog').onclick = () => areaDialog.close();
 $('closeDeviceDialog').onclick = () => deviceDialog.close();
 $('closeLaptopDialog').onclick = () => laptopDialog.close(); $('cancelLaptopDialog').onclick = () => laptopDialog.close();
+$('closeServerDialog').onclick = () => serverDialog.close(); $('cancelServerDialog').onclick = () => serverDialog.close();
 document.querySelectorAll('.copy-command').forEach(button => button.onclick = async () => { try { await navigator.clipboard.writeText(button.dataset.command); const original = button.textContent; button.textContent = 'Copiado ✓'; setTimeout(() => button.textContent = original, 1600); } catch { toast('No fue posible copiar el comando.', true); } });
 $('refreshButton').onclick = loadAll; $('searchInput').oninput = renderEquipment;
 $('exportButton').onclick = async () => {
@@ -119,8 +132,10 @@ $('syncLenovoButton').onclick = async () => {
   finally { button.disabled = false; button.innerHTML = original; }
 };
 $('laptopSearchInput').oninput = renderLaptops;
+$('serverSearchInput').oninput = renderServers;
 dialog.onclick = e => { if (e.target === dialog) dialog.close(); }; areaDialog.onclick = e => { if (e.target === areaDialog) areaDialog.close(); }; deviceDialog.onclick = e => { if (e.target === deviceDialog) deviceDialog.close(); };
 laptopDialog.onclick = e => { if (e.target === laptopDialog) laptopDialog.close(); };
+serverDialog.onclick = e => { if (e.target === serverDialog) serverDialog.close(); };
 
 body.onclick = async e => {
   const button = e.target.closest('button[data-id]'); if (!button) return; const id = button.dataset.id; const item = equipment.find(x => String(x.id) === id);
@@ -133,6 +148,11 @@ laptopBody.onclick = async e => {
   if (button.classList.contains('edit-laptop')) openLaptopForm(item);
   if (button.classList.contains('device-laptop')) openDeviceInfo(item, 'laptop');
   if (button.classList.contains('delete-laptop')) { if (!confirm(`¿Eliminar la laptop ${item.serialNumber}?`)) return; try { const r = await fetch(`/api/laptops/${item.id}`, { method: 'DELETE' }), d = await r.json(); if (!r.ok) throw new Error(d.error); toast('Laptop eliminada'); await loadLaptops(); } catch (err) { toast(err.message, true); } }
+};
+serverBody.onclick = async e => {
+  const button = e.target.closest('button[data-id]'); if (!button) return; const item = servers.find(x => String(x.id) === button.dataset.id);
+  if (button.classList.contains('edit-server')) openServerForm(item);
+  if (button.classList.contains('delete-server')) { if (!confirm(`¿Eliminar el servidor ${item.serverName}?`)) return; try { const response = await fetch(`/api/servidores/${item.id}`, { method: 'DELETE' }), data = await response.json(); if (!response.ok) throw new Error(data.error); toast('Servidor eliminado'); await loadServers(); } catch (error) { toast(error.message, true); } }
 };
 $('areasGrid').onclick = async e => {
   if (!e.target.classList.contains('delete-area')) return; const id = e.target.dataset.id; const item = areas.find(a => String(a.id) === id);
@@ -150,6 +170,10 @@ areaForm.onsubmit = async e => {
 laptopForm.onsubmit = async e => {
   e.preventDefault(); const id = $('laptopId').value; const payload = { serialNumber: $('laptopSerialNumber').value.trim(), area: $('laptopArea').value, responsable: $('laptopResponsable').value.trim() }; $('laptopFormError').textContent = ''; $('saveLaptopButton').disabled = true;
   try { const r = await fetch(`/api/laptops${id ? '/' + id : ''}`, { method: id ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }), d = await r.json(); if (!r.ok) throw new Error(d.error); laptopDialog.close(); toast(id ? 'Laptop actualizada' : 'Laptop registrada · consultando Lenovo...'); await loadLaptops(); if (!id) { const saved = await saveLenovoAutomatically(d.id, 'laptop'); toast(saved ? 'Laptop e información Lenovo guardadas' : 'Laptop guardada; Lenovo no respondió', !saved); } } catch (err) { $('laptopFormError').textContent = err.message; } finally { $('saveLaptopButton').disabled = false; }
+};
+serverForm.onsubmit = async e => {
+  e.preventDefault(); const id = $('serverId').value; const payload = { serialNumber: $('serverSerialNumber').value.trim(), serverName: $('serverName').value.trim(), ipAddress: $('serverIpAddress').value.trim() }; $('serverFormError').textContent = ''; $('saveServerButton').disabled = true;
+  try { const response = await fetch(`/api/servidores${id ? '/' + id : ''}`, { method: id ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }), data = await response.json(); if (!response.ok) throw new Error(data.error); serverDialog.close(); toast(id ? 'Servidor actualizado' : 'Servidor registrado'); await loadServers(); } catch (error) { $('serverFormError').textContent = error.message; } finally { $('saveServerButton').disabled = false; }
 };
 
 switchView('equipment');

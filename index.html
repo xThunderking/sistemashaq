@@ -15,7 +15,7 @@
     <div class="shell">
       <aside class="sidebar">
         <div class="brand"><span class="brand-mark">H</span><div><strong>HAQ</strong><small>Control de activos</small></div></div>
-        <nav><button class="nav-item active" data-view="equipment"><span>▦</span> Equipos</button><button class="nav-item" data-view="laptops"><span>▱</span> Laptops</button><button class="nav-item" data-view="areas"><span>⌑</span> Áreas</button></nav>
+        <nav><button class="nav-item active" data-view="equipment"><span>▦</span> Equipos</button><button class="nav-item" data-view="laptops"><span>▱</span> Laptops</button><button class="nav-item" data-view="servers"><span>▤</span> Servidores</button><button class="nav-item" data-view="areas"><span>⌑</span> Áreas</button></nav>
         <div class="side-foot"><span class="status-dot"></span><div><strong>Sistema activo</strong><small>Amazon Aurora</small></div></div>
       </aside>
 
@@ -54,6 +54,16 @@
             <div class="table-wrap">
               <table><thead><tr><th>NÚMERO DE SERIE</th><th>ÁREA</th><th>RESPONSABLE</th><th>FECHA DE REGISTRO</th><th></th></tr></thead><tbody id="laptopBody"></tbody></table>
               <div id="laptopState" class="state"><span class="loader"></span><p>Cargando laptops...</p></div>
+            </div>
+          </section>
+        </div>
+
+        <div id="serversView" hidden>
+          <section class="panel">
+            <div class="toolbar"><div class="search"><span>⌕</span><input id="serverSearchInput" type="search" placeholder="Buscar servidor por nombre, serie o IP..." /></div><span class="area-total" id="serverCount">0 servidores</span></div>
+            <div class="table-wrap">
+              <table><thead><tr><th>NÚMERO DE SERIE</th><th>NOMBRE DEL SERVIDOR</th><th>DIRECCIÓN IP</th><th>FECHA DE REGISTRO</th><th></th></tr></thead><tbody id="serverBody"></tbody></table>
+              <div id="serverState" class="state"><span class="loader"></span><p>Cargando servidores...</p></div>
             </div>
           </section>
         </div>
@@ -104,6 +114,18 @@
         <label>Responsable <span>*</span><input id="laptopResponsable" maxlength="150" required placeholder="Nombre de quien utiliza la laptop" autocomplete="name" /></label>
         <p id="laptopFormError" class="form-error"></p>
         <div class="modal-actions"><button type="button" class="secondary" id="cancelLaptopDialog">Cancelar</button><button type="submit" class="primary" id="saveLaptopButton">Guardar laptop</button></div>
+      </form>
+    </dialog>
+    <dialog id="serverDialog">
+      <form id="serverForm">
+        <div class="modal-head"><div><p class="eyebrow">SERVIDORES</p><h2 id="serverModalTitle">Agregar servidor</h2></div><button type="button" class="close" id="closeServerDialog">×</button></div>
+        <input type="hidden" id="serverId" />
+        <label>Número de serie <span>*</span><input id="serverSerialNumber" maxlength="100" required placeholder="Ej. MJ06ABC1" /></label>
+        <div class="command-help"><div><small>Obtener serial en PowerShell</small><code>(Get-CimInstance Win32_BIOS).SerialNumber</code></div><button type="button" class="copy-command" data-command="(Get-CimInstance Win32_BIOS).SerialNumber" title="Copiar comando">Copiar</button></div>
+        <label>Nombre del servidor <span>*</span><input id="serverName" maxlength="150" required placeholder="Ej. SRV-ARCHIVOS-01" /></label>
+        <label>Dirección IP <span>*</span><input id="serverIpAddress" required inputmode="decimal" placeholder="Ej. 192.168.1.10" /></label>
+        <p id="serverFormError" class="form-error"></p>
+        <div class="modal-actions"><button type="button" class="secondary" id="cancelServerDialog">Cancelar</button><button type="submit" class="primary" id="saveServerButton">Guardar servidor</button></div>
       </form>
     </dialog>
     <dialog id="deviceDialog" class="device-dialog">
