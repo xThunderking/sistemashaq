@@ -29,6 +29,7 @@ export async function handler(event) {
     const [laptops] = await db.execute(`SELECT l.serial_number, l.area, l.responsable, i.modelo, i.mtm, i.familia,
       i.estado_garantia, l.created_at FROM laptops l
       LEFT JOIN informacion_lenovo_laptops i ON i.laptop_id=l.id ORDER BY l.area, l.serial_number`);
+    const [ipads] = await db.execute('SELECT serial_number, area, responsable, generacion, created_at FROM ipads ORDER BY area, responsable');
     const [servidores] = await db.execute('SELECT serial_number, nombre_servidor, ip_address, created_at FROM servidores ORDER BY nombre_servidor');
     const workbook = new ExcelJS.Workbook(); workbook.creator = 'Sistema HAQ'; workbook.created = new Date();
     const eq = workbook.addWorksheet('Equipos');
@@ -41,6 +42,9 @@ export async function handler(event) {
     const lap = workbook.addWorksheet('Laptops');
     lap.columns = [{ header: 'Número de serie', key: 'serial_number' }, { header: 'Área', key: 'area' }, { header: 'Responsable', key: 'responsable' }, { header: 'Modelo Lenovo', key: 'modelo' }, { header: 'MTM', key: 'mtm' }, { header: 'Familia', key: 'familia' }, { header: 'Garantía', key: 'estado_garantia' }, { header: 'Fecha de registro', key: 'created_at' }];
     laptops.forEach(row => lap.addRow(row)); styleSheet(lap);
+    const ipad = workbook.addWorksheet('iPads');
+    ipad.columns = [{ header: 'Número de serie', key: 'serial_number' }, { header: 'Área', key: 'area' }, { header: 'Responsable', key: 'responsable' }, { header: 'Generación', key: 'generacion' }, { header: 'Fecha de registro', key: 'created_at' }];
+    ipads.forEach(row => ipad.addRow({ ...row, serial_number: row.serial_number || '', generacion: row.generacion === 'decima' ? 'Décima generación' : 'Novena generación' })); styleSheet(ipad);
     const srv = workbook.addWorksheet('Servidores');
     srv.columns = [{ header: 'Número de serie', key: 'serial_number' }, { header: 'Nombre del servidor', key: 'nombre_servidor' }, { header: 'Dirección IP', key: 'ip_address' }, { header: 'Fecha de registro', key: 'created_at' }];
     servidores.forEach(row => srv.addRow(row)); styleSheet(srv);
