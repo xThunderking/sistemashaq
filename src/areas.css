@@ -44,6 +44,10 @@ label select:focus { border-color: #4089ef; box-shadow: 0 0 0 3px #4089ef1c; }
 .device-error { color: #c33c4d; }
 .official-link { display: inline-block; text-decoration: none; margin-top: 10px; }
 .toolbar-actions { display: flex; gap: 8px; }
+.equipment-toolbar { flex-wrap: wrap; }
+.equipment-filters { display: flex; gap: 8px; }
+.equipment-filters select { min-width: 150px; border: 1px solid #dfe5ed; border-radius: 8px; padding: 10px 12px; background: #fff; color: #566277; font: 500 12px inherit; outline: none; }
+.equipment-filters select:focus { border-color: #4089ef; box-shadow: 0 0 0 3px #4089ef1c; }
 .export-button { color: #167d59; border-color: #bfe5d7; background: #f1fbf7; }
 .export-button:hover { background: #e4f7ef; }
 .lenovo-button { color: #315f9f; border-color: #c8d9ee; background: #f3f7fd; }
@@ -78,6 +82,8 @@ label select:focus { border-color: #4089ef; box-shadow: 0 0 0 3px #4089ef1c; }
   .search { width: 100%; }
   .ghost { min-width: 44px; min-height: 44px; padding: 8px; }
   .toolbar-actions { flex-shrink: 0; }
+  .equipment-filters { width: 100%; }
+  .equipment-filters select { flex: 1; min-width: 0; }
   .export-button span { display: none; }
   .lenovo-button span { display: none; }
   .table-wrap { overflow: visible; padding: 10px; background: #f6f8fb; }

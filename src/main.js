@@ -14,10 +14,17 @@ function toast(message, error = false) { const el = $('toast'); el.textContent =
 
 function renderEquipment() {
   const q = $('searchInput').value.toLowerCase().trim();
-  const rows = equipment.filter(e => [e.serialNumber, e.area, e.responsable, e.ipAddress].some(v => v.toLowerCase().includes(q)));
+  const area = $('equipmentAreaFilter').value, audit = $('equipmentAuditFilter').value;
+  const rows = equipment.filter(e => {
+    const matchesSearch = [e.serialNumber, e.area, e.responsable, e.ipAddress].some(v => v.toLowerCase().includes(q));
+    const matchesArea = !area || e.area === area;
+    const complete = auditFields.every(field => Boolean(e[field]));
+    const matchesAudit = !audit || (audit === 'complete' ? complete : !complete);
+    return matchesSearch && matchesArea && matchesAudit;
+  });
   body.innerHTML = rows.map(e => { const checked = auditFields.filter(field => Boolean(e[field])).length; const pending = auditFields.length - checked; return `<tr><td data-label="Número de serie">${escapeHtml(e.serialNumber)}</td><td data-label="Área"><span class="area-pill">${escapeHtml(e.area)}</span></td><td data-label="Responsable">${escapeHtml(e.responsable)}</td><td data-label="Dirección IP"><span class="ip">${escapeHtml(e.ipAddress)}</span></td><td data-label="Auditoría 2026"><span class="audit-status ${pending === 0 ? 'complete' : 'pending'}">${pending === 0 ? '✓ Revisada' : `◷ ${pending} pendiente${pending === 1 ? '' : 's'}`}</span></td><td data-label="Fecha de registro">${formatDate(e.createdAt)}</td><td class="actions"><button class="icon-button edit" data-id="${e.id}" title="Editar" aria-label="Editar equipo">✎ <span>Editar</span></button><button class="icon-button device" data-id="${e.id}" title="Información Lenovo" aria-label="Ver información del equipo">▣ <span>Equipo</span></button><button class="icon-button danger delete" data-id="${e.id}" title="Eliminar" aria-label="Eliminar equipo">⌫ <span>Eliminar</span></button></td></tr>`; }).join('');
   state.hidden = rows.length > 0;
-  if (!rows.length) state.innerHTML = `<span class="empty-icon">▧</span><p>${q ? 'No se encontraron coincidencias.' : 'Aún no hay equipos registrados.'}</p>`;
+  if (!rows.length) state.innerHTML = `<span class="empty-icon">▧</span><p>${q || area || audit ? 'No se encontraron coincidencias con los filtros seleccionados.' : 'Aún no hay equipos registrados.'}</p>`;
   $('resultCount').textContent = `${rows.length} ${rows.length === 1 ? 'equipo' : 'equipos'}`;
   $('totalCount').textContent = equipment.length;
   $('areaCount').textContent = areas.length;
@@ -27,6 +34,9 @@ function renderEquipment() {
 function renderAreas() {
   const options = '<option value="">Selecciona un área</option>' + areas.map(a => `<option value="${escapeHtml(a.nombre)}">${escapeHtml(a.nombre)}</option>`).join('');
   $('area').innerHTML = options; $('laptopArea').innerHTML = options; $('ipadArea').innerHTML = options;
+  const selectedArea = $('equipmentAreaFilter').value;
+  $('equipmentAreaFilter').innerHTML = '<option value="">Todas las áreas</option>' + areas.map(a => `<option value="${escapeHtml(a.nombre)}">${escapeHtml(a.nombre)}</option>`).join('');
+  $('equipmentAreaFilter').value = selectedArea;
   $('areasGrid').innerHTML = areas.map(a => `<article class="area-card"><div class="area-card-name"><span class="area-card-icon">⌑</span>${escapeHtml(a.nombre)}</div><button class="icon-button danger delete-area" data-id="${a.id}" title="Eliminar área">⌫</button></article>`).join('');
   $('areasState').hidden = areas.length > 0;
   $('areaTotal').textContent = `${areas.length} ${areas.length === 1 ? 'área' : 'áreas'}`;
@@ -121,7 +131,7 @@ $('closeLaptopDialog').onclick = () => laptopDialog.close(); $('cancelLaptopDial
 $('closeServerDialog').onclick = () => serverDialog.close(); $('cancelServerDialog').onclick = () => serverDialog.close();
 $('closeIpadDialog').onclick = () => ipadDialog.close(); $('cancelIpadDialog').onclick = () => ipadDialog.close();
 document.querySelectorAll('.copy-command').forEach(button => button.onclick = async () => { try { await navigator.clipboard.writeText(button.dataset.command); const original = button.textContent; button.textContent = 'Copiado ✓'; setTimeout(() => button.textContent = original, 1600); } catch { toast('No fue posible copiar el comando.', true); } });
-$('refreshButton').onclick = loadAll; $('searchInput').oninput = renderEquipment;
+$('refreshButton').onclick = loadAll; $('searchInput').oninput = renderEquipment; $('equipmentAreaFilter').onchange = renderEquipment; $('equipmentAuditFilter').onchange = renderEquipment;
 $('exportButton').onclick = async () => {
   const button = $('exportButton'), original = button.innerHTML; button.disabled = true; button.innerHTML = '⌛ <span>Generando...</span>';
   try { const response = await fetch('/api/exportar'); if (!response.ok) { const data = await response.json(); throw new Error(data.error || 'No fue posible generar el archivo.'); } const blob = await response.blob(); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = `inventario-haq-${new Date().toISOString().slice(0, 10)}.xlsx`; document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url); toast('Inventario exportado'); } catch (error) { toast(error.message, true); } finally { button.disabled = false; button.innerHTML = original; }
