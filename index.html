@@ -120,6 +120,7 @@
         <div class="modal-head"><div><p class="eyebrow">LAPTOPS</p><h2 id="laptopModalTitle">Agregar laptop</h2></div><button type="button" class="close" id="closeLaptopDialog">×</button></div>
         <input type="hidden" id="laptopId" />
         <label>Número de serie <span>*</span><input id="laptopSerialNumber" maxlength="100" required placeholder="Ej. PF3AB123" /></label>
+        <div class="command-help"><div><small>Obtener serial en PowerShell</small><code>(Get-CimInstance Win32_BIOS).SerialNumber</code></div><button type="button" class="copy-command" data-command="(Get-CimInstance Win32_BIOS).SerialNumber" title="Copiar comando">Copiar</button></div>
         <label>Área <span>*</span><select id="laptopArea" required><option value="">Selecciona un área</option></select></label>
         <label>Responsable <span>*</span><input id="laptopResponsable" maxlength="150" required placeholder="Nombre de quien utiliza la laptop" autocomplete="name" /></label>
         <p id="laptopFormError" class="form-error"></p>
