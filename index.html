@@ -15,7 +15,7 @@
     <div class="shell">
       <aside class="sidebar">
         <div class="brand"><span class="brand-mark">H</span><div><strong>HAQ</strong><small>Control de activos</small></div></div>
-        <nav><button class="nav-item active" data-view="equipment"><span>▦</span> Equipos</button><button class="nav-item" data-view="laptops"><span>▱</span> Laptops</button><button class="nav-item" data-view="servers"><span>▤</span> Servidores</button><button class="nav-item" data-view="areas"><span>⌑</span> Áreas</button></nav>
+        <nav><button class="nav-item active" data-view="equipment"><span>▦</span> Equipos</button><button class="nav-item" data-view="laptops"><span>▱</span> Laptops</button><button class="nav-item" data-view="ipads"><span>▯</span> iPads</button><button class="nav-item" data-view="servers"><span>▤</span> Servidores</button><button class="nav-item" data-view="areas"><span>⌑</span> Áreas</button></nav>
         <div class="side-foot"><span class="status-dot"></span><div><strong>Sistema activo</strong><small>Amazon Aurora</small></div></div>
       </aside>
 
@@ -64,6 +64,16 @@
             <div class="table-wrap">
               <table><thead><tr><th>NÚMERO DE SERIE</th><th>NOMBRE DEL SERVIDOR</th><th>DIRECCIÓN IP</th><th>FECHA DE REGISTRO</th><th></th></tr></thead><tbody id="serverBody"></tbody></table>
               <div id="serverState" class="state"><span class="loader"></span><p>Cargando servidores...</p></div>
+            </div>
+          </section>
+        </div>
+
+        <div id="ipadsView" hidden>
+          <section class="panel">
+            <div class="toolbar"><div class="search"><span>⌕</span><input id="ipadSearchInput" type="search" placeholder="Buscar iPad por serie, área, responsable o generación..." /></div><span class="area-total" id="ipadCount">0 iPads</span></div>
+            <div class="table-wrap">
+              <table><thead><tr><th>NÚMERO DE SERIE</th><th>ÁREA</th><th>RESPONSABLE</th><th>GENERACIÓN</th><th>FECHA DE REGISTRO</th><th></th></tr></thead><tbody id="ipadBody"></tbody></table>
+              <div id="ipadState" class="state"><span class="loader"></span><p>Cargando iPads...</p></div>
             </div>
           </section>
         </div>
@@ -126,6 +136,18 @@
         <label>Dirección IP <span>*</span><input id="serverIpAddress" required inputmode="decimal" placeholder="Ej. 192.168.1.10" /></label>
         <p id="serverFormError" class="form-error"></p>
         <div class="modal-actions"><button type="button" class="secondary" id="cancelServerDialog">Cancelar</button><button type="submit" class="primary" id="saveServerButton">Guardar servidor</button></div>
+      </form>
+    </dialog>
+    <dialog id="ipadDialog">
+      <form id="ipadForm">
+        <div class="modal-head"><div><p class="eyebrow">IPADS</p><h2 id="ipadModalTitle">Agregar iPad</h2></div><button type="button" class="close" id="closeIpadDialog">×</button></div>
+        <input type="hidden" id="ipadId" />
+        <label>Número de serie <small>(opcional)</small><input id="ipadSerialNumber" maxlength="100" placeholder="Ej. DMPX1234ABCD" /></label>
+        <label>Área <span>*</span><select id="ipadArea" required><option value="">Selecciona un área</option></select></label>
+        <label>Responsable <span>*</span><input id="ipadResponsable" maxlength="150" required placeholder="Nombre de quien utiliza el iPad" autocomplete="name" /></label>
+        <label>Generación <span>*</span><select id="ipadGeneration" required><option value="">Selecciona una generación</option><option value="decima">Décima generación</option><option value="novena">Novena generación</option></select></label>
+        <p id="ipadFormError" class="form-error"></p>
+        <div class="modal-actions"><button type="button" class="secondary" id="cancelIpadDialog">Cancelar</button><button type="submit" class="primary" id="saveIpadButton">Guardar iPad</button></div>
       </form>
     </dialog>
     <dialog id="deviceDialog" class="device-dialog">

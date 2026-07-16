@@ -4,7 +4,8 @@ const form = $('equipmentForm'), areaDialog = $('areaDialog'), areaForm = $('are
 const deviceDialog = $('deviceDialog');
 const laptopDialog = $('laptopDialog'), laptopForm = $('laptopForm'), laptopBody = $('laptopBody');
 const serverDialog = $('serverDialog'), serverForm = $('serverForm'), serverBody = $('serverBody');
-let equipment = [], areas = [], laptops = [], servers = [];
+const ipadDialog = $('ipadDialog'), ipadForm = $('ipadForm'), ipadBody = $('ipadBody');
+let equipment = [], areas = [], laptops = [], servers = [], ipads = [];
 const auditFields = ['revisionSoftware', 'antivirus', 'usb', 'paginasNoAutorizadas', 'escritorio', 'tiempoBloqueo', 'bloqueoConfiguracion', 'glpi'];
 
 const escapeHtml = (value = '') => String(value).replace(/[&<>'"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[c]);
@@ -25,7 +26,7 @@ function renderEquipment() {
 
 function renderAreas() {
   const options = '<option value="">Selecciona un área</option>' + areas.map(a => `<option value="${escapeHtml(a.nombre)}">${escapeHtml(a.nombre)}</option>`).join('');
-  $('area').innerHTML = options; $('laptopArea').innerHTML = options;
+  $('area').innerHTML = options; $('laptopArea').innerHTML = options; $('ipadArea').innerHTML = options;
   $('areasGrid').innerHTML = areas.map(a => `<article class="area-card"><div class="area-card-name"><span class="area-card-icon">⌑</span>${escapeHtml(a.nombre)}</div><button class="icon-button danger delete-area" data-id="${a.id}" title="Eliminar área">⌫</button></article>`).join('');
   $('areasState').hidden = areas.length > 0;
   $('areaTotal').textContent = `${areas.length} ${areas.length === 1 ? 'área' : 'áreas'}`;
@@ -47,6 +48,14 @@ function renderServers() {
   if (!rows.length) $('serverState').innerHTML = `<span class="empty-icon">▤</span><p>${q ? 'No se encontraron coincidencias.' : 'Aún no hay servidores registrados.'}</p>`;
   $('serverCount').textContent = `${rows.length} ${rows.length === 1 ? 'servidor' : 'servidores'}`;
 }
+function renderIpads() {
+  const q = $('ipadSearchInput').value.toLowerCase().trim();
+  const rows = ipads.filter(item => [item.serialNumber || '', item.area, item.responsable, item.generation].some(value => value.toLowerCase().includes(q)));
+  ipadBody.innerHTML = rows.map(item => `<tr><td data-label="Número de serie">${escapeHtml(item.serialNumber || '—')}</td><td data-label="Área"><span class="area-pill">${escapeHtml(item.area)}</span></td><td data-label="Responsable">${escapeHtml(item.responsable)}</td><td data-label="Generación">${item.generation === 'decima' ? 'Décima generación' : 'Novena generación'}</td><td data-label="Fecha de registro">${formatDate(item.createdAt)}</td><td class="actions"><button class="icon-button edit-ipad" data-id="${item.id}" aria-label="Editar iPad">✎ <span>Editar</span></button><button class="icon-button danger delete-ipad" data-id="${item.id}" aria-label="Eliminar iPad">⌫ <span>Eliminar</span></button></td></tr>`).join('');
+  $('ipadState').hidden = rows.length > 0;
+  if (!rows.length) $('ipadState').innerHTML = `<span class="empty-icon">▯</span><p>${q ? 'No se encontraron coincidencias.' : 'Aún no hay iPads registrados.'}</p>`;
+  $('ipadCount').textContent = `${rows.length} ${rows.length === 1 ? 'iPad' : 'iPads'}`;
+}
 
 async function loadEquipment() {
   state.hidden = false; state.innerHTML = '<span class="loader"></span><p>Cargando equipos...</p>';
@@ -59,25 +68,28 @@ async function loadAreas() {
 }
 async function loadLaptops() { try { const res = await fetch('/api/laptops'), data = await res.json(); if (!res.ok) throw new Error(data.error); laptops = data; renderLaptops(); } catch (e) { $('laptopState').innerHTML = `<span class="empty-icon">!</span><p>${escapeHtml(e.message)}</p>`; toast(e.message, true); } }
 async function loadServers() { try { const res = await fetch('/api/servidores'), data = await res.json(); if (!res.ok) throw new Error(data.error); servers = data; renderServers(); } catch (e) { $('serverState').innerHTML = `<span class="empty-icon">!</span><p>${escapeHtml(e.message)}</p>`; toast(e.message, true); } }
-async function loadAll() { await Promise.all([loadEquipment(), loadAreas(), loadLaptops(), loadServers()]); }
+async function loadIpads() { try { const res = await fetch('/api/ipads'), data = await res.json(); if (!res.ok) throw new Error(data.error); ipads = data; renderIpads(); } catch (e) { $('ipadState').innerHTML = `<span class="empty-icon">!</span><p>${escapeHtml(e.message)}</p>`; toast(e.message, true); } }
+async function loadAll() { await Promise.all([loadEquipment(), loadAreas(), loadLaptops(), loadServers(), loadIpads()]); }
 
 function switchView(view) {
   const isAreas = view === 'areas';
   const isLaptops = view === 'laptops';
   const isServers = view === 'servers';
-  $('equipmentView').hidden = isAreas || isLaptops || isServers; $('areasView').hidden = !isAreas; $('laptopsView').hidden = !isLaptops; $('serversView').hidden = !isServers;
+  const isIpads = view === 'ipads';
+  $('equipmentView').hidden = isAreas || isLaptops || isServers || isIpads; $('areasView').hidden = !isAreas; $('laptopsView').hidden = !isLaptops; $('serversView').hidden = !isServers; $('ipadsView').hidden = !isIpads;
   document.querySelectorAll('.nav-item').forEach(button => button.classList.toggle('active', button.dataset.view === view));
   $('pageEyebrow').textContent = isAreas ? 'CATÁLOGO' : 'INVENTARIO';
-  $('pageTitle').textContent = isAreas ? 'Áreas' : isLaptops ? 'Control de laptops' : isServers ? 'Control de servidores' : 'Control de equipos';
-  $('pageSubtitle').textContent = isAreas ? 'Administra las áreas disponibles en el sistema.' : isLaptops ? 'Administra las laptops de la organización.' : isServers ? 'Administra los servidores de la organización.' : 'Administra los activos tecnológicos de tu organización.';
-  $('newButton').textContent = isAreas ? '＋ Agregar área' : isLaptops ? '＋ Agregar laptop' : isServers ? '＋ Agregar servidor' : '＋ Agregar equipo';
-  $('newButton').dataset.action = isAreas ? 'area' : isLaptops ? 'laptop' : isServers ? 'server' : 'equipment';
+  $('pageTitle').textContent = isAreas ? 'Áreas' : isLaptops ? 'Control de laptops' : isIpads ? 'Control de iPads' : isServers ? 'Control de servidores' : 'Control de equipos';
+  $('pageSubtitle').textContent = isAreas ? 'Administra las áreas disponibles en el sistema.' : isLaptops ? 'Administra las laptops de la organización.' : isIpads ? 'Administra los iPads de la organización.' : isServers ? 'Administra los servidores de la organización.' : 'Administra los activos tecnológicos de tu organización.';
+  $('newButton').textContent = isAreas ? '＋ Agregar área' : isLaptops ? '＋ Agregar laptop' : isIpads ? '＋ Agregar iPad' : isServers ? '＋ Agregar servidor' : '＋ Agregar equipo';
+  $('newButton').dataset.action = isAreas ? 'area' : isLaptops ? 'laptop' : isIpads ? 'ipad' : isServers ? 'server' : 'equipment';
 }
 
 function openEquipmentForm(item) { form.reset(); $('formError').textContent = ''; $('equipmentId').value = item?.id || ''; $('modalTitle').textContent = item ? 'Editar equipo' : 'Agregar equipo'; $('serialNumber').value = item?.serialNumber || ''; $('area').value = item?.area || ''; $('responsable').value = item?.responsable || ''; $('ipAddress').value = item?.ipAddress || ''; auditFields.forEach(field => $(field).checked = Boolean(item?.[field])); dialog.showModal(); $('serialNumber').focus(); }
 function openAreaForm() { areaForm.reset(); $('areaFormError').textContent = ''; areaDialog.showModal(); $('areaName').focus(); }
 function openLaptopForm(item) { laptopForm.reset(); $('laptopFormError').textContent = ''; $('laptopId').value = item?.id || ''; $('laptopModalTitle').textContent = item ? 'Editar laptop' : 'Agregar laptop'; $('laptopSerialNumber').value = item?.serialNumber || ''; $('laptopArea').value = item?.area || ''; $('laptopResponsable').value = item?.responsable || ''; laptopDialog.showModal(); $('laptopSerialNumber').focus(); }
 function openServerForm(item) { serverForm.reset(); $('serverFormError').textContent = ''; $('serverId').value = item?.id || ''; $('serverModalTitle').textContent = item ? 'Editar servidor' : 'Agregar servidor'; $('serverSerialNumber').value = item?.serialNumber || ''; $('serverName').value = item?.serverName || ''; $('serverIpAddress').value = item?.ipAddress || ''; serverDialog.showModal(); $('serverSerialNumber').focus(); }
+function openIpadForm(item) { ipadForm.reset(); $('ipadFormError').textContent = ''; $('ipadId').value = item?.id || ''; $('ipadModalTitle').textContent = item ? 'Editar iPad' : 'Agregar iPad'; $('ipadSerialNumber').value = item?.serialNumber || ''; $('ipadArea').value = item?.area || ''; $('ipadResponsable').value = item?.responsable || ''; $('ipadGeneration').value = item?.generation || ''; ipadDialog.showModal(); $('ipadSerialNumber').focus(); }
 async function saveLenovoAutomatically(id, type = 'equipment') {
   const path = type === 'laptop' ? `/api/lenovo/laptop/${id}` : `/api/lenovo/${id}`;
   try { const response = await fetch(path); if (!response.ok) throw new Error(); return true; }
@@ -101,12 +113,13 @@ async function openDeviceInfo(item, type = 'equipment') {
 }
 
 document.querySelectorAll('.nav-item').forEach(button => button.onclick = () => switchView(button.dataset.view));
-$('newButton').onclick = e => e.currentTarget.dataset.action === 'area' ? openAreaForm() : e.currentTarget.dataset.action === 'laptop' ? openLaptopForm() : e.currentTarget.dataset.action === 'server' ? openServerForm() : openEquipmentForm();
+$('newButton').onclick = e => e.currentTarget.dataset.action === 'area' ? openAreaForm() : e.currentTarget.dataset.action === 'laptop' ? openLaptopForm() : e.currentTarget.dataset.action === 'ipad' ? openIpadForm() : e.currentTarget.dataset.action === 'server' ? openServerForm() : openEquipmentForm();
 $('closeDialog').onclick = () => dialog.close(); $('cancelDialog').onclick = () => dialog.close();
 $('closeAreaDialog').onclick = () => areaDialog.close(); $('cancelAreaDialog').onclick = () => areaDialog.close();
 $('closeDeviceDialog').onclick = () => deviceDialog.close();
 $('closeLaptopDialog').onclick = () => laptopDialog.close(); $('cancelLaptopDialog').onclick = () => laptopDialog.close();
 $('closeServerDialog').onclick = () => serverDialog.close(); $('cancelServerDialog').onclick = () => serverDialog.close();
+$('closeIpadDialog').onclick = () => ipadDialog.close(); $('cancelIpadDialog').onclick = () => ipadDialog.close();
 document.querySelectorAll('.copy-command').forEach(button => button.onclick = async () => { try { await navigator.clipboard.writeText(button.dataset.command); const original = button.textContent; button.textContent = 'Copiado ✓'; setTimeout(() => button.textContent = original, 1600); } catch { toast('No fue posible copiar el comando.', true); } });
 $('refreshButton').onclick = loadAll; $('searchInput').oninput = renderEquipment;
 $('exportButton').onclick = async () => {
@@ -133,9 +146,11 @@ $('syncLenovoButton').onclick = async () => {
 };
 $('laptopSearchInput').oninput = renderLaptops;
 $('serverSearchInput').oninput = renderServers;
+$('ipadSearchInput').oninput = renderIpads;
 dialog.onclick = e => { if (e.target === dialog) dialog.close(); }; areaDialog.onclick = e => { if (e.target === areaDialog) areaDialog.close(); }; deviceDialog.onclick = e => { if (e.target === deviceDialog) deviceDialog.close(); };
 laptopDialog.onclick = e => { if (e.target === laptopDialog) laptopDialog.close(); };
 serverDialog.onclick = e => { if (e.target === serverDialog) serverDialog.close(); };
+ipadDialog.onclick = e => { if (e.target === ipadDialog) ipadDialog.close(); };
 
 body.onclick = async e => {
   const button = e.target.closest('button[data-id]'); if (!button) return; const id = button.dataset.id; const item = equipment.find(x => String(x.id) === id);
@@ -153,6 +168,11 @@ serverBody.onclick = async e => {
   const button = e.target.closest('button[data-id]'); if (!button) return; const item = servers.find(x => String(x.id) === button.dataset.id);
   if (button.classList.contains('edit-server')) openServerForm(item);
   if (button.classList.contains('delete-server')) { if (!confirm(`¿Eliminar el servidor ${item.serverName}?`)) return; try { const response = await fetch(`/api/servidores/${item.id}`, { method: 'DELETE' }), data = await response.json(); if (!response.ok) throw new Error(data.error); toast('Servidor eliminado'); await loadServers(); } catch (error) { toast(error.message, true); } }
+};
+ipadBody.onclick = async e => {
+  const button = e.target.closest('button[data-id]'); if (!button) return; const item = ipads.find(x => String(x.id) === button.dataset.id);
+  if (button.classList.contains('edit-ipad')) openIpadForm(item);
+  if (button.classList.contains('delete-ipad')) { const label = item.serialNumber || item.responsable; if (!confirm(`¿Eliminar el iPad de ${label}?`)) return; try { const response = await fetch(`/api/ipads/${item.id}`, { method: 'DELETE' }), data = await response.json(); if (!response.ok) throw new Error(data.error); toast('iPad eliminado'); await loadIpads(); } catch (error) { toast(error.message, true); } }
 };
 $('areasGrid').onclick = async e => {
   if (!e.target.classList.contains('delete-area')) return; const id = e.target.dataset.id; const item = areas.find(a => String(a.id) === id);
@@ -174,6 +194,10 @@ laptopForm.onsubmit = async e => {
 serverForm.onsubmit = async e => {
   e.preventDefault(); const id = $('serverId').value; const payload = { serialNumber: $('serverSerialNumber').value.trim(), serverName: $('serverName').value.trim(), ipAddress: $('serverIpAddress').value.trim() }; $('serverFormError').textContent = ''; $('saveServerButton').disabled = true;
   try { const response = await fetch(`/api/servidores${id ? '/' + id : ''}`, { method: id ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }), data = await response.json(); if (!response.ok) throw new Error(data.error); serverDialog.close(); toast(id ? 'Servidor actualizado' : 'Servidor registrado'); await loadServers(); } catch (error) { $('serverFormError').textContent = error.message; } finally { $('saveServerButton').disabled = false; }
+};
+ipadForm.onsubmit = async e => {
+  e.preventDefault(); const id = $('ipadId').value; const payload = { serialNumber: $('ipadSerialNumber').value.trim(), area: $('ipadArea').value, responsable: $('ipadResponsable').value.trim(), generation: $('ipadGeneration').value }; $('ipadFormError').textContent = ''; $('saveIpadButton').disabled = true;
+  try { const response = await fetch(`/api/ipads${id ? '/' + id : ''}`, { method: id ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }), data = await response.json(); if (!response.ok) throw new Error(data.error); ipadDialog.close(); toast(id ? 'iPad actualizado' : 'iPad registrado'); await loadIpads(); } catch (error) { $('ipadFormError').textContent = error.message || 'No fue posible guardar.'; } finally { $('saveIpadButton').disabled = false; }
 };
 
 switchView('equipment');

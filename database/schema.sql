@@ -106,3 +106,16 @@ CREATE TABLE IF NOT EXISTS servidores (
   CONSTRAINT uq_servidores_ip UNIQUE (ip_address),
   INDEX idx_servidores_nombre (nombre_servidor)
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS ipads (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  serial_number VARCHAR(100) NULL,
+  area VARCHAR(100) NOT NULL,
+  responsable VARCHAR(150) NOT NULL,
+  generacion ENUM('novena', 'decima') NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  CONSTRAINT uq_ipads_serial UNIQUE (serial_number),
+  INDEX idx_ipads_area (area)
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
